@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette Heatmap App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    /* Stilmall för de klickbara numren */
+    .roulette-grid {
+      display: grid;
+      grid-gap: 5px;
+      justify-content: center;
+    }
+    .roulette-button {
+      width: 50px;
+      height: 50px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #f9f9f9;
+    }
+    .selected-numbers {
+      margin: 10px 0;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 10px auto;
+    }
+    td {
+      border: 1px solid #000;
+      width: 50px;
+      height: 50px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 16px;
+    }
+    .heatmap-cell {
+      transition: background-color 0.3s;
+    }
+    /* Enkel styling för reset-knappen */
+    #resetNumbers {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Roulette Heatmap App</h1>
+  
+  <!-- Steg 1: Välj bordstyp -->
+  <div id="rouletteTypeSelection">
+    <p>Välj bordstyp:</p>
+    <label>
+      <input type="radio" name="tableType" value="european" checked> Enkel nolla (Europeiskt)
+    </label>
+    <label>
+      <input type="radio" name="tableType" value="american"> 0/00 (Amerikanskt)
+    </label>
+    <button id="confirmType">Bekräfta</button>
+  </div>
+
+  <!-- Steg 2: Välj numren som träffat bordet -->
+  <div id="numberInputSection" class="hidden">
+    <p>Klicka på de nummer som träffat roulettebordet:</p>
+    <div id="numberGrid" class="roulette-grid"></div>
+    <div class="selected-numbers">
+      Valda nummer: <span id="selectedNumbersDisplay"></span>
+    </div>
+    <!-- Reset-knapp för att rensa inmatade nummer -->
+    <button id="resetNumbers">Reset</button>
+  </div>
+
+  <!-- Steg 3: Välj vilken heatmap du vill se -->
+  <div id="heatmapOptions" class="hidden">
+    <p>Välj vilken heatmap du vill se:</p>
+    <button id="showStandardHeatmap">Visa heatmap på vanligt roulettebord</button>
+    <button id="showRacetrackHeatmap">Visa heatmap på racetrackbord</button>
+  </div>
+
+  <!-- Heatmapområdet -->
+  <div id="heatmapDisplay" class="hidden">
+    <!-- Heatmap-layouten kommer att renderas här -->
+  </div>
+
+  <script>
+    // --- Globala variabler ---
+    let tableType = 'european';  // Standard är europeiskt (enkel nolla)
+    let selectedNumbers = [];
+    const minSpinsForHeatmap = 5; // Minst 5 nummer krävs för att heatmap ska bli tillgänglig
+
+    // Referenser till element
+    const rouletteTypeSelectionDiv = document.getElementById('rouletteTypeSelection');
+    const numberInputSectionDiv = document.getElementById('numberInputSection');
+    const heatmapOptionsDiv = document.getElementById('heatmapOptions');
+    const heatmapDisplayDiv = document.getElementById('heatmapDisplay');
+    const selectedNumbersDisplay = document.getElementById('selectedNumbersDisplay');
+    const numberGridDiv = document.getElementById('numberGrid');
+    const resetButton = document.getElementById('resetNumbers');
+
+    // --- Händelsehantering ---
+    document.getElementById('confirmType').addEventListener('click', function() {
+      // Läs av vilken bordstyp som är vald
+      const radios = document.getElementsByName('tableType');
+      for (let radio of radios) {
+        if (radio.checked) {
+          tableType = radio.value;
+          break;
+        }
+      }
+      // Göm typvalet och visa nummerkartan
+      rouletteTypeSelectionDiv.classList.add('hidden');
+      setupNumberGrid();
+      numberInputSectionDiv.classList.remove('hidden');
+    });
+
+    // Skapar nummerkartan (klickbara knappar) beroende på vald bordstyp
+    function setupNumberGrid() {
+      numberGridDiv.innerHTML = '';
+      let numbers = [];
+      if (tableType === 'european') {
+        // Europeiskt: 0 och 1-36
+        numbers.push('0');
+        for (let i = 1; i <= 36; i++) {
+          numbers.push(i.toString());
+        }
+      } else {
+        // Amerikanskt: 0, 00 och 1-36
+        numbers.push('0');
+        numbers.push('00');
+        for (let i = 1; i <= 36; i++) {
+          numbers.push(i.toString());
+        }
+      }
+      // För varje nummer skapas en knapp.
+      numbers.forEach(num => {
+        let btn = document.createElement('button');
+        btn.textContent = num;
+        btn.className = 'roulette-button';
+        btn.dataset.number = num;
+        btn.dataset.count = 0;
+        btn.addEventListener('click', function() {
+          // Lägg till numret i listan, oavsett hur många som redan är inmatade
+          selectedNumbers.push(num);
+          updateSelectedNumbersDisplay();
+          // Uppdatera räkningen på knappen
+          let currentCount = parseInt(btn.dataset.count);
+          currentCount++;
+          btn.dataset.count = currentCount;
+          btn.textContent = num + (currentCount > 0 ? ' (' + currentCount + ')' : '');
+          // Visa heatmap-alternativen så fort minst 5 nummer registrerats
+          if (selectedNumbers.length >= minSpinsForHeatmap) {
+            heatmapOptionsDiv.classList.remove('hidden');
+          }
+        });
+        numberGridDiv.appendChild(btn);
+      });
+      // Anpassa grid-layouten (exempelvis 6 kolumner)
+      numberGridDiv.style.gridTemplateColumns = 'repeat(6, 50px)';
+    }
+
+    // Uppdaterar texten med de valda numren
+    function updateSelectedNumbersDisplay() {
+      selectedNumbersDisplay.textContent = selectedNumbers.join(', ');
+    }
+
+    // Returnerar en färg beroende på hur många gånger ett nummer träffats
+    function getColorForCount(count) {
+      if (count === 0) return '#fff';
+      if (count === 1) return '#ffcccc';
+      if (count === 2) return '#ff9999';
+      if (count >= 3) return '#ff6666';
+      return '#fff';
+    }
+
+    // Händelsehanterare för heatmap-knapparna
+    document.getElementById('showStandardHeatmap').addEventListener('click', function() {
+      displayHeatmap('standard');
+    });
+    document.getElementById('showRacetrackHeatmap').addEventListener('click', function() {
+      displayHeatmap('racetrack');
+    });
+
+    // Räknar hur många gånger varje nummer valts
+    function getNumberFrequencies() {
+      let frequencies = {};
+      let possibleNumbers = [];
+      if (tableType === 'european') {
+        possibleNumbers.push('0');
+        for (let i = 1; i <= 36; i++) {
+          possibleNumbers.push(i.toString());
+        }
+      } else {
+        possibleNumbers.push('0', '00');
+        for (let i = 1; i <= 36; i++) {
+          possibleNumbers.push(i.toString());
+        }
+      }
+      possibleNumbers.forEach(num => frequencies[num] = 0);
+      selectedNumbers.forEach(num => {
+        if (frequencies[num] !== undefined) {
+          frequencies[num]++;
+        }
+      });
+      return frequencies;
+    }
+
+    // Renderar heatmapen beroende på vald layouttyp
+    function displayHeatmap(layoutType) {
+      heatmapDisplayDiv.innerHTML = '';
+      heatmapDisplayDiv.classList.remove('hidden');
+      const frequencies = getNumberFrequencies();
+
+      if (layoutType === 'standard') {
+        // --- Standardbord: visas som en tabell ---
+        let table = document.createElement('table');
+        if (tableType === 'european') {
+          // För europeiskt bord: översta raden med 0 (spänner över tre kolumner)
+          let row0 = document.createElement('tr');
+          let cell0 = document.createElement('td');
+          cell0.colSpan = 3;
+          cell0.textContent = '0';
+          cell0.className = 'heatmap-cell';
+          cell0.style.backgroundColor = getColorForCount(frequencies['0']);
+          row0.appendChild(cell0);
+          table.appendChild(row0);
+          // Rader för numren 1-36 i 12 rader med 3 kolumner vardera
+          for (let i = 0; i < 12; i++) {
+            let row = document.createElement('tr');
+            for (let j = 0; j < 3; j++) {
+              let num = (i * 3 + j + 1).toString();
+              let cell = document.createElement('td');
+              cell.textContent = num;
+              cell.className = 'heatmap-cell';
+              cell.style.backgroundColor = getColorForCount(frequencies[num]);
+              row.appendChild(cell);
+            }
+            table.appendChild(row);
+          }
+        } else {
+          // --- Amerikanskt bord ---
+          // Översta raden med 0 och 00
+          let row0 = document.createElement('tr');
+          let cell0 = document.createElement('td');
+          cell0.textContent = '0';
+          cell0.className = 'heatmap-cell';
+          cell0.style.backgroundColor = getColorForCount(frequencies['0']);
+          row0.appendChild(cell0);
+          let cell00 = document.createElement('td');
+          cell00.textContent = '00';
+          cell00.className = 'heatmap-cell';
+          cell00.style.backgroundColor = getColorForCount(frequencies['00']);
+          // För att centrera raden, sätter vi colSpan på den andra cellen
+          cell00.colSpan = 2;
+          row0.appendChild(cell00);
+          table.appendChild(row0);
+          // Rader för numren 1-36 (12 rader á 3 kolumner)
+          for (let i = 0; i < 12; i++) {
+            let row = document.createElement('tr');
+            for (let j = 0; j < 3; j++) {
+              let num = (i * 3 + j + 1).toString();
+              let cell = document.createElement('td');
+              cell.textContent = num;
+              cell.className = 'heatmap-cell';
+              cell.style.backgroundColor = getColorForCount(frequencies[num]);
+              row.appendChild(cell);
+            }
+            table.appendChild(row);
+          }
+        }
+        heatmapDisplayDiv.appendChild(table);
+      } else if (layoutType === 'racetrack') {
+        // --- Racetrackbord: numren visas i den ordning de finns på roulettehjulet ---
+        let racetrackDiv = document.createElement('div');
+        racetrackDiv.style.display = 'flex';
+        racetrackDiv.style.flexWrap = 'wrap';
+        racetrackDiv.style.justifyContent = 'center';
+        let wheelOrder = [];
+        if (tableType === 'european') {
+          // Europeiskt roulettehjul (exempelordning)
+          wheelOrder = ['0', '32', '15', '19', '4', '21', '2', '25', '17', '34', '6', '27', '13', '36', '11', '30', '8', '23', '10', '5', '24', '16', '33', '1', '20', '14', '31', '9', '22', '18', '29', '7', '28', '12', '35', '3', '26'];
+        } else {
+          // Amerikanskt roulettehjul (exempelordning)
+          wheelOrder = ['0', '28', '9', '26', '30', '11', '7', '20', '32', '17', '5', '22', '34', '15', '3', '24', '36', '13', '1', '00', '27', '10', '25', '29', '12', '8', '19', '31', '18', '6', '21', '4', '2', '23', '35', '14', '16'];
+        }
+        // Skapa en liten ruta för varje nummer
+        wheelOrder.forEach(num => {
+          let box = document.createElement('div');
+          box.textContent = num;
+          box.style.width = '40px';
+          box.style.height = '40px';
+          box.style.display = 'flex';
+          box.style.justifyContent = 'center';
+          box.style.alignItems = 'center';
+          box.style.margin = '2px';
+          box.style.border = '1px solid #000';
+          box.style.borderRadius = '4px';
+          box.style.backgroundColor = getColorForCount(frequencies[num] || 0);
+          racetrackDiv.appendChild(box);
+        });
+        heatmapDisplayDiv.appendChild(racetrackDiv);
+      }
+    }
+
+    // Reset-funktion: rensar alla inmatade nummer och återställer knapparnas räknare
+    resetButton.addEventListener('click', function() {
+      // Rensa listan med valda nummer
+      selectedNumbers = [];
+      updateSelectedNumbersDisplay();
+      // Dölj heatmap-alternativen om vi inte längre har minst 5 nummer
+      if (selectedNumbers.length < minSpinsForHeatmap) {
+        heatmapOptionsDiv.classList.add('hidden');
+      }
+      // Återställ varje knapp i nummerkartan
+      const buttons = numberGridDiv.getElementsByClassName('roulette-button');
+      for (let btn of buttons) {
+        btn.dataset.count = 0;
+        btn.textContent = btn.dataset.number;
+      }
+      // Rensa eventuell visad heatmap
+      heatmapDisplayDiv.innerHTML = '';
+      heatmapDisplayDiv.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
