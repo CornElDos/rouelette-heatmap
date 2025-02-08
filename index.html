@@ -97,6 +97,8 @@
     let tableType = 'european';  // Standard är europeiskt (enkel nolla)
     let selectedNumbers = [];
     const minSpinsForHeatmap = 5; // Minst 5 nummer krävs för att heatmap ska bli tillgänglig
+    // Variabel för att spara aktuell heatmap-layout ("standard" eller "racetrack")
+    let currentHeatmapLayout = null;
 
     // Referenser till element
     const rouletteTypeSelectionDiv = document.getElementById('rouletteTypeSelection');
@@ -161,6 +163,10 @@
           if (selectedNumbers.length >= minSpinsForHeatmap) {
             heatmapOptionsDiv.classList.remove('hidden');
           }
+          // Om heatmap redan visas, uppdatera den automatiskt
+          if (currentHeatmapLayout !== null) {
+            displayHeatmap(currentHeatmapLayout);
+          }
         });
         numberGridDiv.appendChild(btn);
       });
@@ -184,9 +190,11 @@
 
     // Händelsehanterare för heatmap-knapparna
     document.getElementById('showStandardHeatmap').addEventListener('click', function() {
+      currentHeatmapLayout = 'standard';
       displayHeatmap('standard');
     });
     document.getElementById('showRacetrackHeatmap').addEventListener('click', function() {
+      currentHeatmapLayout = 'racetrack';
       displayHeatmap('racetrack');
     });
 
@@ -311,7 +319,7 @@
       }
     }
 
-    // Reset-funktion: rensar alla inmatade nummer och återställer knapparnas räknare
+    // Reset-funktion: rensar alla inmatade nummer och återställer knapparnas räknare samt heatmapen
     resetButton.addEventListener('click', function() {
       // Rensa listan med valda nummer
       selectedNumbers = [];
@@ -326,9 +334,10 @@
         btn.dataset.count = 0;
         btn.textContent = btn.dataset.number;
       }
-      // Rensa eventuell visad heatmap
+      // Rensa eventuell visad heatmap och återställ aktuell layout
       heatmapDisplayDiv.innerHTML = '';
       heatmapDisplayDiv.classList.add('hidden');
+      currentHeatmapLayout = null;
     });
   </script>
 </body>
