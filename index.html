@@ -52,6 +52,11 @@
       font-size: 16px;
       cursor: pointer;
     }
+    /* Styling for the line gap display */
+    #lineCounterDisplay {
+      margin-top: 15px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -78,6 +83,8 @@
     </div>
     <!-- Reset button to clear the entered numbers -->
     <button id="resetNumbers">Reset</button>
+    <!-- New: Line gap display -->
+    <div id="lineCounterDisplay"></div>
   </div>
 
   <!-- Step 3: Choose which heatmap to display -->
@@ -99,6 +106,16 @@
     const minSpinsForHeatmap = 5; // At least 5 numbers are required to display the heatmap
     // Variable to keep track of the current heatmap layout ("standard" or "racetrack")
     let currentHeatmapLayout = null;
+
+    // Define the 6 line groups (line bets) – only numbers 1-36 are considered
+    const lineGroups = [
+      { name: "Line 1", numbers: ["1", "2", "3", "4", "5", "6"] },
+      { name: "Line 2", numbers: ["7", "8", "9", "10", "11", "12"] },
+      { name: "Line 3", numbers: ["13", "14", "15", "16", "17", "18"] },
+      { name: "Line 4", numbers: ["19", "20", "21", "22", "23", "24"] },
+      { name: "Line 5", numbers: ["25", "26", "27", "28", "29", "30"] },
+      { name: "Line 6", numbers: ["31", "32", "33", "34", "35", "36"] }
+    ];
 
     // Get element references
     const rouletteTypeSelectionDiv = document.getElementById('rouletteTypeSelection');
@@ -123,6 +140,7 @@
       rouletteTypeSelectionDiv.classList.add('hidden');
       setupNumberGrid();
       numberInputSectionDiv.classList.remove('hidden');
+      updateLineCounters(); // Initialize line counters
     });
 
     // Create the number grid (clickable buttons) based on the selected table type
@@ -163,10 +181,12 @@
           if (selectedNumbers.length >= minSpinsForHeatmap) {
             heatmapOptionsDiv.classList.remove('hidden');
           }
-          // If the heatmap is already visible, update it automatically
+          // Update heatmap if already visible
           if (currentHeatmapLayout !== null) {
             displayHeatmap(currentHeatmapLayout);
           }
+          // Update line counters each spin
+          updateLineCounters();
         });
         numberGridDiv.appendChild(btn);
       });
@@ -177,6 +197,25 @@
     // Update the displayed list of selected numbers
     function updateSelectedNumbersDisplay() {
       selectedNumbersDisplay.textContent = selectedNumbers.join(', ');
+    }
+
+    // Update the line gap counters based on the spins (selectedNumbers)
+    function updateLineCounters() {
+      let displayHTML = "<h3>Line Gaps</h3>";
+      // For each line group, determine the gap since a winning spin
+      lineGroups.forEach(group => {
+        let lastIndex = -1;
+        for (let i = selectedNumbers.length - 1; i >= 0; i--) {
+          if (group.numbers.includes(selectedNumbers[i])) {
+            lastIndex = i;
+            break;
+          }
+        }
+        // If never won, gap equals total spins; otherwise, gap = spins since win
+        let gap = (lastIndex === -1) ? selectedNumbers.length : (selectedNumbers.length - lastIndex - 1);
+        displayHTML += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+      });
+      document.getElementById("lineCounterDisplay").innerHTML = displayHTML;
     }
 
     // Return a color based on how many times a number was selected
@@ -319,7 +358,7 @@
       }
     }
 
-    // Reset function: clears all entered numbers and resets the button counters and heatmap
+    // Reset function: clears all entered numbers, resets the button counters, heatmap, and line counters
     resetButton.addEventListener('click', function() {
       // Clear the list of selected numbers
       selectedNumbers = [];
@@ -338,6 +377,8 @@
       heatmapDisplayDiv.innerHTML = '';
       heatmapDisplayDiv.classList.add('hidden');
       currentHeatmapLayout = null;
+      // Update line counters (will show zero gap for all lines)
+      updateLineCounters();
     });
   </script>
 </body>
