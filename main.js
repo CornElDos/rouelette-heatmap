@@ -8,17 +8,21 @@ let selectedNumbers = [];
 const minSpinsForHeatmap = 5;
 let currentHeatmapLayout = null;
 
+// Bankroll and betting settings
 let bankroll = 1000;
 let stakeStyle = "fixed"; // "fixed" or "percent"
 let baseBet = 10;
 let basePercent = 10;
 let roundingFactor = 5; // 5 or 10
 let betProgression = "martingale"; // "martingale", "fibonacci", or "padovan"
+
+// For tracking consecutive losses (for progression systems)
 let consecutiveLosses = 0;
 
 // NEW: Let the user decide when to start betting
 let bettingActive = false; // off by default
 
+// Current bet suggestion
 let currentBet = {
   betType: null, // "line" or "column"
   betTarget: null, // e.g. "Line 3" or "Column 2"
@@ -37,18 +41,9 @@ const lineGroups = [
 
 // Define column groups
 const columnGroups = [
-  {
-    name: "Column 1",
-    numbers: ["1", "4", "7", "10", "13", "16", "19", "22", "25", "28", "31", "34"],
-  },
-  {
-    name: "Column 2",
-    numbers: ["2", "5", "8", "11", "14", "17", "20", "23", "26", "29", "32", "35"],
-  },
-  {
-    name: "Column 3",
-    numbers: ["3", "6", "9", "12", "15", "18", "21", "24", "27", "30", "33", "36"],
-  },
+  { name: "Column 1", numbers: ["1","4","7","10","13","16","19","22","25","28","31","34"] },
+  { name: "Column 2", numbers: ["2","5","8","11","14","17","20","23","26","29","32","35"] },
+  { name: "Column 3", numbers: ["3","6","9","12","15","18","21","24","27","30","33","36"] },
 ];
 
 // For coloring red/black/green in standard layout
@@ -74,7 +69,7 @@ const progressionStepDisplay = document.getElementById("progressionStepDisplay")
 const winProbabilityDisplay = document.getElementById("winProbabilityDisplay");
 const lastBetResultDisplay = document.getElementById("lastBetResultDisplay");
 
-// NEW: Toggle Betting button & status text
+// Toggle Betting button & status text
 const toggleBettingBtn = document.getElementById("toggleBettingBtn");
 const bettingStatusMsg = document.getElementById("bettingStatusMsg");
 
@@ -151,6 +146,7 @@ function setupNumberGrid() {
       numbers.push(i.toString());
     }
   }
+
   numbers.forEach((num) => {
     let btn = document.createElement("button");
     btn.textContent = num;
@@ -164,6 +160,7 @@ function setupNumberGrid() {
       currentCount++;
       btn.dataset.count = currentCount;
       btn.textContent = num + (currentCount > 0 ? ` (${currentCount})` : "");
+
       if (selectedNumbers.length >= minSpinsForHeatmap) {
         heatmapOptionsDiv.classList.remove("d-none");
       }
@@ -173,7 +170,7 @@ function setupNumberGrid() {
       updateLineCounters();
       updateColumnCounters();
 
-      // Only do bet logic if betting is active
+      // --- IMPORTANT: only run bet logic if betting is ON
       if (bettingActive) {
         checkLastBetResult(num);
         updateBetSuggestion();
@@ -253,7 +250,7 @@ function getNumberFrequencies() {
   return frequencies;
 }
 
-// 6a) Standard table with red/black/green borders
+// Standard table with colored borders
 function displayStandardTable(frequencies) {
   let table = document.createElement("table");
   table.className = "table table-sm table-bordered text-center w-auto mx-auto roulette-table";
@@ -302,15 +299,13 @@ function displayStandardTable(frequencies) {
 }
 
 function createRouletteCell(num, freq) {
-  // Create a cell with heatmap shading + border color
   let cell = document.createElement("td");
   cell.textContent = num;
   cell.classList.add("heatmap-cell");
-
-  // Apply background shading based on freq
+  // Heatmap shading
   cell.style.backgroundColor = getColorForCount(freq);
 
-  // Apply border color class
+  // Border color
   if (num === "0" || num === "00") {
     cell.classList.add("green-cell");
   } else if (redNumbers.includes(num)) {
@@ -321,7 +316,7 @@ function createRouletteCell(num, freq) {
   return cell;
 }
 
-// 6b) Racetrack
+// Racetrack
 function displayRacetrack(frequencies) {
   let racetrackDiv = document.createElement("div");
   racetrackDiv.className = "d-flex flex-wrap justify-content-center";
@@ -390,9 +385,8 @@ resetButton.addEventListener("click", function () {
   lastBetResultDisplay.textContent = "N/A";
 });
 
-// =========== TOGGLE BETTING ===========
+/* =========== TOGGLE BETTING =========== */
 toggleBettingBtn.addEventListener("click", function () {
-  // Toggle the boolean
   bettingActive = !bettingActive;
   if (bettingActive) {
     toggleBettingBtn.textContent = "Stop Betting";
@@ -404,13 +398,11 @@ toggleBettingBtn.addEventListener("click", function () {
 });
 
 /* =============== BET PROGRESSION & LOGIC =============== */
-
-// Round bet size to nearest factor
 function roundBetSize(value) {
   return Math.ceil(value / roundingFactor) * roundingFactor;
 }
 
-// Martingale: base * 2^losses
+// Martingale
 function getNextBetMartingale(losses, base) {
   return base * 2 ** losses;
 }
@@ -432,7 +424,6 @@ function getNextBetFibonacci(losses, base) {
 
 // Padovan
 function getNextBetPadovan(losses, base) {
-  // P(0)=1, P(1)=1, P(2)=1, P(n)=P(n-2)+P(n-3)
   function padovan(n) {
     if (n < 3) return 1;
     let p0 = 1, p1 = 1, p2 = 1;
@@ -448,7 +439,6 @@ function getNextBetPadovan(losses, base) {
   return base * padovan(losses);
 }
 
-// Check if the last bet was a win or loss
 function checkLastBetResult(latestNumber) {
   // If we haven't assigned a bet or bet size, skip
   if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
@@ -471,7 +461,6 @@ function checkLastBetResult(latestNumber) {
   displayBankroll();
 }
 
-// Suggest or update the next bet
 function updateBetSuggestion(resetToNA = false) {
   if (resetToNA) {
     suggestedBetDisplay.textContent = "N/A";
@@ -488,7 +477,7 @@ function updateBetSuggestion(resetToNA = false) {
     return;
   }
 
-  // If betting is OFF, just display a note
+  // If betting is OFF => show "Betting is OFF" and do not update bet size
   if (!bettingActive) {
     suggestedBetDisplay.textContent = "Betting is OFF";
     betSizeDisplay.textContent = "0";
