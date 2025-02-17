@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Roulette Heatmap App</title>
-  <!-- Bootstrap 5 CSS (via CDN) -->
+  <!-- Bootstrap 5 CSS -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
   />
-  <!-- Your custom CSS -->
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -85,7 +85,7 @@
           </label>
         </div>
       </div>
-      <div class="mb-3 d-block" id="baseBetRow">
+      <div class="mb-3" id="baseBetRow">
         <label for="baseBetInput" class="form-label">Base bet (units):</label>
         <input
           type="number"
@@ -96,9 +96,7 @@
         />
       </div>
       <div class="mb-3 d-none" id="basePercentRow">
-        <label for="basePercentInput" class="form-label"
-          >Base percentage (%):</label
-        >
+        <label for="basePercentInput" class="form-label">Base percentage (%):</label>
         <input
           type="number"
           class="form-control"
@@ -166,7 +164,9 @@
           <label class="form-check-label" for="padovan">Padovan</label>
         </div>
       </div>
-      <button id="confirmBankroll" class="btn btn-success">Confirm Bankroll &amp; Settings</button>
+      <button id="confirmBankroll" class="btn btn-success">
+        Confirm Bankroll &amp; Settings
+      </button>
     </div>
 
     <!-- Step 2: Enter the numbers that hit the table -->
@@ -178,7 +178,9 @@
           <strong>Selected numbers:</strong>
           <span id="selectedNumbersDisplay"></span>
         </div>
-        <button id="resetNumbers" class="btn btn-outline-secondary">Reset</button>
+        <button id="resetNumbers" class="btn btn-outline-secondary">
+          Reset
+        </button>
       </div>
       <div class="col-lg-4">
         <div id="lineCounterDisplay" class="mb-3"></div>
@@ -189,8 +191,12 @@
     <!-- Step 3: Choose which heatmap to display -->
     <div id="heatmapOptions" class="my-3 d-none">
       <p>Choose which heatmap you want to display:</p>
-      <button id="showStandardHeatmap" class="btn btn-primary">Show standard roulette heatmap</button>
-      <button id="showRacetrackHeatmap" class="btn btn-secondary">Show racetrack heatmap</button>
+      <button id="showStandardHeatmap" class="btn btn-primary">
+        Show standard roulette heatmap
+      </button>
+      <button id="showRacetrackHeatmap" class="btn btn-secondary">
+        Show racetrack heatmap
+      </button>
     </div>
 
     <!-- Heatmap display area -->
@@ -225,7 +231,9 @@
           <span id="lastBetResultDisplay">N/A</span>
         </p>
         <!-- NEW: Button to toggle betting on/off -->
-        <button id="toggleBettingBtn" class="btn btn-warning">Start Betting</button>
+        <button id="toggleBettingBtn" class="btn btn-warning">
+          Start Betting
+        </button>
         <p class="mt-2" id="bettingStatusMsg" style="font-style: italic;">
           Betting is currently <strong>OFF</strong>.
         </p>
@@ -235,7 +243,7 @@
 
   <!-- Bootstrap JS (optional) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Your main JavaScript file -->
-  <script src="main.js"></script>
+  <!-- Our main JS as module -->
+  <script type="module" src="main.js"></script>
 </body>
 </html>
