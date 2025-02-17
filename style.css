@@ -1,6 +1,6 @@
-/* Basic custom CSS overrides or additions */
+/* Basic custom CSS */
 
-/* Our grid for the number buttons */
+/* Grid for number buttons */
 .roulette-grid {
   display: grid;
   grid-gap: 5px;
@@ -8,7 +8,7 @@
   grid-template-columns: repeat(6, 50px);
 }
 
-/* Buttons for each roulette number */
+/* Number buttons styling */
 .roulette-button {
   width: 50px;
   height: 50px;
@@ -23,17 +23,14 @@
   background-color: #e9e9e9;
 }
 
-/* Heatmap shading transitions */
+/* Heatmap cell transition */
 .heatmap-cell {
   transition: background-color 0.3s;
   text-align: center;
   vertical-align: middle;
 }
 
-/* 
-  For standard layout: we add a border color 
-  that indicates whether the pocket is red, black, or green 
-*/
+/* Border classes for standard layout */
 .red-cell {
   border: 2px solid red !important;
 }
@@ -44,17 +41,13 @@
   border: 2px solid green !important;
 }
 
-/* 
-  Make sure the table is not too wide 
-  and is centered 
-*/
+/* Ensure the roulette table is auto-width and centered */
 .roulette-table {
-  width: auto; 
-  margin: 0 auto; 
+  width: auto;
+  margin: 0 auto;
 }
 
-/* Extra spacing in card body if you want */
+/* Extra spacing in card body */
 .card-body p {
   margin-bottom: 0.75rem;
 }
-/**/
