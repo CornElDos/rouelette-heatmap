@@ -1,266 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Roulette Heatmap App</title>
-  <!-- Bootstrap 5 CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-  <!-- Custom CSS -->
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container my-4">
-    <h1 class="text-center mb-4">Roulette Heatmap App</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roulette Heatmap App</title>
+    <!-- Bootstrap 5 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container my-4">
+      <h1 class="text-center mb-4">Roulette Heatmap App</h1>
 
-    <!-- Step 1: Choose table type -->
-    <div id="rouletteTypeSelection" class="mb-4">
-      <p>Choose table type:</p>
-      <div class="form-check">
-        <input
-          class="form-check-input"
-          type="radio"
-          name="tableType"
-          value="european"
-          id="tableTypeEuropean"
-          checked
-        />
-        <label class="form-check-label" for="tableTypeEuropean">
-          Single zero (European)
-        </label>
-      </div>
-      <div class="form-check">
-        <input
-          class="form-check-input"
-          type="radio"
-          name="tableType"
-          value="american"
-          id="tableTypeAmerican"
-        />
-        <label class="form-check-label" for="tableTypeAmerican">
-          0/00 (American)
-        </label>
-      </div>
-      <button id="confirmType" class="btn btn-primary mt-2">
-        Confirm
-      </button>
-    </div>
-
-    <!-- Step 1b: Bankroll, stake style, rounding & progression selection -->
-    <div id="bankrollSection" class="mb-4 d-none">
-      <div class="mb-3">
-        <label for="bankrollInput" class="form-label">
-          Enter your bankroll:
-        </label>
-        <input
-          type="number"
-          class="form-control"
-          id="bankrollInput"
-          min="1"
-          value="1000"
-        />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Choose stake style:</label>
+      <!-- Step 1: Choose table type -->
+      <div id="rouletteTypeSelection" class="mb-4">
+        <p>Choose table type:</p>
         <div class="form-check">
           <input
             class="form-check-input"
             type="radio"
-            name="stakeStyle"
-            value="fixed"
-            id="stakeStyleFixed"
+            name="tableType"
+            value="european"
+            id="tableTypeEuropean"
             checked
           />
-          <label class="form-check-label" for="stakeStyleFixed">
-            Fixed amount
+          <label class="form-check-label" for="tableTypeEuropean">
+            Single zero (European)
           </label>
         </div>
         <div class="form-check">
           <input
             class="form-check-input"
             type="radio"
-            name="stakeStyle"
-            value="percent"
-            id="stakeStylePercent"
+            name="tableType"
+            value="american"
+            id="tableTypeAmerican"
           />
-          <label class="form-check-label" for="stakeStylePercent">
-            Percentage of bankroll
+          <label class="form-check-label" for="tableTypeAmerican">
+            0/00 (American)
           </label>
         </div>
+        <button id="confirmType" class="btn btn-primary mt-2">
+          Confirm
+        </button>
       </div>
-      <div class="mb-3" id="baseBetRow">
-        <label for="baseBetInput" class="form-label">Base bet (units):</label>
-        <input
-          type="number"
-          class="form-control"
-          id="baseBetInput"
-          min="1"
-          value="10"
-        />
-      </div>
-      <div class="mb-3 d-none" id="basePercentRow">
-        <label for="basePercentInput" class="form-label">
-          Base percentage (%):
-        </label>
-        <input
-          type="number"
-          class="form-control"
-          id="basePercentInput"
-          min="1"
-          max="100"
-          value="10"
-        />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Round bet size to:</label>
-        <div class="form-check">
+
+      <!-- Step 1b: Bankroll, stake style, rounding & progression selection -->
+      <div id="bankrollSection" class="mb-4 d-none">
+        <div class="mb-3">
+          <label for="bankrollInput" class="form-label">
+            Enter your bankroll:
+          </label>
           <input
-            class="form-check-input"
-            type="radio"
-            name="rounding"
-            value="5"
-            id="round5"
-            checked
+            type="number"
+            class="form-control"
+            id="bankrollInput"
+            min="1"
+            value="1000"
           />
-          <label class="form-check-label" for="round5">
-            Nearest 5
-          </label>
         </div>
-        <div class="form-check">
+        <div class="mb-3">
+          <label class="form-label">Choose stake style:</label>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="stakeStyle"
+              value="fixed"
+              id="stakeStyleFixed"
+              checked
+            />
+            <label class="form-check-label" for="stakeStyleFixed">
+              Fixed amount
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="stakeStyle"
+              value="percent"
+              id="stakeStylePercent"
+            />
+            <label class="form-check-label" for="stakeStylePercent">
+              Percentage of bankroll
+            </label>
+          </div>
+        </div>
+        <div class="mb-3" id="baseBetRow">
+          <label for="baseBetInput" class="form-label">Base bet (units):</label>
           <input
-            class="form-check-input"
-            type="radio"
-            name="rounding"
+            type="number"
+            class="form-control"
+            id="baseBetInput"
+            min="1"
             value="10"
-            id="round10"
           />
-          <label class="form-check-label" for="round10">
-            Nearest 10
-          </label>
         </div>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Choose betting progression:</label>
-        <div class="form-check">
+        <div class="mb-3 d-none" id="basePercentRow">
+          <label for="basePercentInput" class="form-label">
+            Base percentage (%):
+          </label>
           <input
-            class="form-check-input"
-            type="radio"
-            name="betProgression"
-            value="martingale"
-            id="martingale"
-            checked
+            type="number"
+            class="form-control"
+            id="basePercentInput"
+            min="1"
+            max="100"
+            value="10"
           />
-          <label class="form-check-label" for="martingale">
-            Martingale
-          </label>
         </div>
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="betProgression"
-            value="fibonacci"
-            id="fibonacci"
-          />
-          <label class="form-check-label" for="fibonacci">
-            Fibonacci
-          </label>
+        <div class="mb-3">
+          <label class="form-label">Round bet size to:</label>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="rounding"
+              value="5"
+              id="round5"
+              checked
+            />
+            <label class="form-check-label" for="round5">
+              Nearest 5
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="rounding"
+              value="10"
+              id="round10"
+            />
+            <label class="form-check-label" for="round10">
+              Nearest 10
+            </label>
+          </div>
         </div>
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="radio"
-            name="betProgression"
-            value="padovan"
-            id="padovan"
-          />
-          <label class="form-check-label" for="padovan">
-            Padovan
-          </label>
+        <div class="mb-3">
+          <label class="form-label">Choose betting progression:</label>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="betProgression"
+              value="martingale"
+              id="martingale"
+              checked
+            />
+            <label class="form-check-label" for="martingale">
+              Martingale
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="betProgression"
+              value="fibonacci"
+              id="fibonacci"
+            />
+            <label class="form-check-label" for="fibonacci">
+              Fibonacci
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="betProgression"
+              value="padovan"
+              id="padovan"
+            />
+            <label class="form-check-label" for="padovan">
+              Padovan
+            </label>
+          </div>
         </div>
-      </div>
-      <button id="confirmBankroll" class="btn btn-success">
-        Confirm Bankroll &amp; Settings
-      </button>
-    </div>
-
-    <!-- Step 2: Enter the numbers that hit the table -->
-    <div id="numberInputSection" class="row d-none">
-      <div class="col-lg-8">
-        <p>Click on the numbers that hit the roulette table:</p>
-        <div id="numberGrid" class="roulette-grid mb-3"></div>
-        <div class="selected-numbers mb-3">
-          <strong>Selected numbers:</strong>
-          <span id="selectedNumbersDisplay"></span>
-        </div>
-        <button id="resetNumbers" class="btn btn-outline-secondary">
-          Reset
+        <button id="confirmBankroll" class="btn btn-success">
+          Confirm Bankroll &amp; Settings
         </button>
       </div>
-      <div class="col-lg-4">
-        <div id="lineCounterDisplay" class="mb-3"></div>
-        <div id="columnCounterDisplay" class="mb-3"></div>
+
+      <!-- Step 2: Enter the numbers that hit the table -->
+      <div id="numberInputSection" class="row d-none">
+        <div class="col-lg-8">
+          <p>Click on the numbers that hit the roulette table:</p>
+          <div id="numberGrid" class="roulette-grid mb-3"></div>
+          <div class="selected-numbers mb-3">
+            <strong>Selected numbers:</strong>
+            <span id="selectedNumbersDisplay"></span>
+          </div>
+          <button id="resetNumbers" class="btn btn-outline-secondary">
+            Reset
+          </button>
+        </div>
+        <div class="col-lg-4">
+          <div id="lineCounterDisplay" class="mb-3"></div>
+          <div id="columnCounterDisplay" class="mb-3"></div>
+        </div>
       </div>
-    </div>
 
-    <!-- Step 3: Choose which heatmap to display -->
-    <div id="heatmapOptions" class="my-3 d-none">
-      <p>Choose which heatmap you want to display:</p>
-      <button id="showStandardHeatmap" class="btn btn-primary">
-        Show standard roulette heatmap
-      </button>
-      <button id="showRacetrackHeatmap" class="btn btn-secondary">
-        Show racetrack heatmap
-      </button>
-    </div>
-
-    <!-- Heatmap display area -->
-    <div id="heatmapDisplay" class="d-none mb-4"></div>
-
-    <!-- Bet Suggestion Section -->
-    <div id="betSuggestionArea" class="card d-none">
-      <div class="card-body">
-        <h3 class="card-title">Bet Suggestion</h3>
-        <p>
-          <strong>Bankroll:</strong>
-          <span id="bankrollDisplay"></span>
-        </p>
-        <p>
-          <strong>Suggested Bet:</strong>
-          <span id="suggestedBetDisplay"></span>
-        </p>
-        <p>
-          <strong>Bet Size:</strong>
-          <span id="betSizeDisplay"></span>
-        </p>
-        <p>
-          <strong>Progression Step:</strong>
-          <span id="progressionStepDisplay"></span>
-        </p>
-        <p>
-          <strong>Win Probability:</strong>
-          <span id="winProbabilityDisplay"></span>
-        </p>
-        <p>
-          <strong>Last Bet Result:</strong>
-          <span id="lastBetResultDisplay">N/A</span>
-        </p>
-        <button id="toggleBettingBtn" class="btn btn-warning">
-          Start Betting
+      <!-- Step 3: Choose which heatmap to display -->
+      <div id="heatmapOptions" class="my-3 d-none">
+        <p>Choose which heatmap you want to display:</p>
+        <button id="showStandardHeatmap" class="btn btn-primary">
+          Show standard roulette heatmap
         </button>
-        <p class="mt-2" id="bettingStatusMsg" style="font-style: italic;">
-          Betting is currently <strong>OFF</strong>.
-        </p>
+        <button id="showRacetrackHeatmap" class="btn btn-secondary">
+          Show racetrack heatmap
+        </button>
+      </div>
+
+      <!-- Heatmap display area -->
+      <div id="heatmapDisplay" class="d-none mb-4"></div>
+
+      <!-- Bet Suggestion Section -->
+      <div id="betSuggestionArea" class="card d-none">
+        <div class="card-body">
+          <h3 class="card-title">Bet Suggestion</h3>
+          <p>
+            <strong>Bankroll:</strong>
+            <span id="bankrollDisplay"></span>
+          </p>
+          <p>
+            <strong>Suggested Bet:</strong>
+            <span id="suggestedBetDisplay"></span>
+          </p>
+          <p>
+            <strong>Bet Size:</strong>
+            <span id="betSizeDisplay"></span>
+          </p>
+          <p>
+            <strong>Progression Step:</strong>
+            <span id="progressionStepDisplay"></span>
+          </p>
+          <p>
+            <strong>Win Probability:</strong>
+            <span id="winProbabilityDisplay"></span>
+          </p>
+          <p>
+            <strong>Last Bet Result:</strong>
+            <span id="lastBetResultDisplay">N/A</span>
+          </p>
+          <button id="toggleBettingBtn" class="btn btn-warning">
+            Start Betting
+          </button>
+          <p class="mt-2" id="bettingStatusMsg" style="font-style: italic;">
+            Betting is currently <strong>OFF</strong>.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Bootstrap JS (optional) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Our main JS as module -->
-  <script type="module" src="main.js"></script>
-</body>
+    <!-- Bootstrap JS (optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Our main JS as module -->
+    <script type="module" src="main.js"></script>
+  </body>
 </html>
