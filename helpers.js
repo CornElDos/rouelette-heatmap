@@ -1,5 +1,4 @@
-// helpers.js - Gemensamma hjälpfunktioner
-
+/* helpers.js */
 export function roundBetSize(value, roundingFactor) {
   return Math.ceil(value / roundingFactor) * roundingFactor;
 }
@@ -13,7 +12,7 @@ export function getNextBetFibonacci(losses, base) {
     if (n <= 1) return 1;
     let a = 1, b = 1;
     for (let i = 2; i <= n; i++) {
-      const temp = a + b;
+      let temp = a + b;
       a = b;
       b = temp;
     }
