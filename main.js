@@ -8,18 +8,17 @@ let selectedNumbers = [];
 const minSpinsForHeatmap = 5;
 let currentHeatmapLayout = null;
 
-// Bankroll and betting settings
 let bankroll = 1000;
 let stakeStyle = "fixed"; // "fixed" or "percent"
 let baseBet = 10;
 let basePercent = 10;
 let roundingFactor = 5; // 5 or 10
 let betProgression = "martingale"; // "martingale", "fibonacci", or "padovan"
-
-// For tracking consecutive losses (for progression systems)
 let consecutiveLosses = 0;
 
-// Current bet suggestion
+// NEW: Let the user decide when to start betting
+let bettingActive = false; // off by default
+
 let currentBet = {
   betType: null, // "line" or "column"
   betTarget: null, // e.g. "Line 3" or "Column 2"
@@ -38,9 +37,23 @@ const lineGroups = [
 
 // Define column groups
 const columnGroups = [
-  { name: "Column 1", numbers: ["1","4","7","10","13","16","19","22","25","28","31","34"] },
-  { name: "Column 2", numbers: ["2","5","8","11","14","17","20","23","26","29","32","35"] },
-  { name: "Column 3", numbers: ["3","6","9","12","15","18","21","24","27","30","33","36"] },
+  {
+    name: "Column 1",
+    numbers: ["1", "4", "7", "10", "13", "16", "19", "22", "25", "28", "31", "34"],
+  },
+  {
+    name: "Column 2",
+    numbers: ["2", "5", "8", "11", "14", "17", "20", "23", "26", "29", "32", "35"],
+  },
+  {
+    name: "Column 3",
+    numbers: ["3", "6", "9", "12", "15", "18", "21", "24", "27", "30", "33", "36"],
+  },
+];
+
+// For coloring red/black/green in standard layout
+const redNumbers = [
+  "1","3","5","7","9","12","14","16","18","19","21","23","25","27","30","32","34","36"
 ];
 
 // Element references
@@ -60,6 +73,10 @@ const betSizeDisplay = document.getElementById("betSizeDisplay");
 const progressionStepDisplay = document.getElementById("progressionStepDisplay");
 const winProbabilityDisplay = document.getElementById("winProbabilityDisplay");
 const lastBetResultDisplay = document.getElementById("lastBetResultDisplay");
+
+// NEW: Toggle Betting button & status text
+const toggleBettingBtn = document.getElementById("toggleBettingBtn");
+const bettingStatusMsg = document.getElementById("bettingStatusMsg");
 
 // =========== EVENT HANDLERS ===========
 
@@ -155,8 +172,12 @@ function setupNumberGrid() {
       }
       updateLineCounters();
       updateColumnCounters();
-      checkLastBetResult(num);
-      updateBetSuggestion();
+
+      // Only do bet logic if betting is active
+      if (bettingActive) {
+        checkLastBetResult(num);
+        updateBetSuggestion();
+      }
     });
     numberGridDiv.appendChild(btn);
   });
@@ -232,60 +253,75 @@ function getNumberFrequencies() {
   return frequencies;
 }
 
+// 6a) Standard table with red/black/green borders
 function displayStandardTable(frequencies) {
   let table = document.createElement("table");
-  table.className = "table table-bordered mx-auto";
+  table.className = "table table-sm table-bordered text-center w-auto mx-auto roulette-table";
+  
   if (tableType === "european") {
+    // Top row: 0 spanning three columns
     let row0 = document.createElement("tr");
-    let cell0 = document.createElement("td");
+    let cell0 = createRouletteCell("0", frequencies["0"]);
     cell0.colSpan = 3;
-    cell0.textContent = "0";
-    cell0.className = "heatmap-cell";
-    cell0.style.backgroundColor = getColorForCount(frequencies["0"]);
     row0.appendChild(cell0);
     table.appendChild(row0);
+
+    // Rows for 1-36 in 12 rows of 3 columns
     for (let i = 0; i < 12; i++) {
       let row = document.createElement("tr");
       for (let j = 0; j < 3; j++) {
         let num = (i * 3 + j + 1).toString();
-        let cell = document.createElement("td");
-        cell.textContent = num;
-        cell.className = "heatmap-cell";
-        cell.style.backgroundColor = getColorForCount(frequencies[num]);
+        let cell = createRouletteCell(num, frequencies[num]);
         row.appendChild(cell);
       }
       table.appendChild(row);
     }
   } else {
+    // American: top row with 0 and 00
     let row0 = document.createElement("tr");
-    let cell0 = document.createElement("td");
-    cell0.textContent = "0";
-    cell0.className = "heatmap-cell";
-    cell0.style.backgroundColor = getColorForCount(frequencies["0"]);
+    let cell0 = createRouletteCell("0", frequencies["0"]);
     row0.appendChild(cell0);
-    let cell00 = document.createElement("td");
-    cell00.textContent = "00";
-    cell00.className = "heatmap-cell";
-    cell00.style.backgroundColor = getColorForCount(frequencies["00"]);
+    let cell00 = createRouletteCell("00", frequencies["00"]);
     cell00.colSpan = 2;
     row0.appendChild(cell00);
     table.appendChild(row0);
+
+    // Then rows for 1-36
     for (let i = 0; i < 12; i++) {
       let row = document.createElement("tr");
       for (let j = 0; j < 3; j++) {
         let num = (i * 3 + j + 1).toString();
-        let cell = document.createElement("td");
-        cell.textContent = num;
-        cell.className = "heatmap-cell";
-        cell.style.backgroundColor = getColorForCount(frequencies[num]);
+        let cell = createRouletteCell(num, frequencies[num]);
         row.appendChild(cell);
       }
       table.appendChild(row);
     }
   }
+
   heatmapDisplayDiv.appendChild(table);
 }
 
+function createRouletteCell(num, freq) {
+  // Create a cell with heatmap shading + border color
+  let cell = document.createElement("td");
+  cell.textContent = num;
+  cell.classList.add("heatmap-cell");
+
+  // Apply background shading based on freq
+  cell.style.backgroundColor = getColorForCount(freq);
+
+  // Apply border color class
+  if (num === "0" || num === "00") {
+    cell.classList.add("green-cell");
+  } else if (redNumbers.includes(num)) {
+    cell.classList.add("red-cell");
+  } else {
+    cell.classList.add("black-cell");
+  }
+  return cell;
+}
+
+// 6b) Racetrack
 function displayRacetrack(frequencies) {
   let racetrackDiv = document.createElement("div");
   racetrackDiv.className = "d-flex flex-wrap justify-content-center";
@@ -345,7 +381,6 @@ resetButton.addEventListener("click", function () {
   currentHeatmapLayout = null;
   updateLineCounters();
   updateColumnCounters();
-  // Reset bet suggestion and consecutive losses
   currentBet.betType = null;
   currentBet.betTarget = null;
   currentBet.betSize = 0;
@@ -353,6 +388,19 @@ resetButton.addEventListener("click", function () {
   displayBankroll();
   updateBetSuggestion(true);
   lastBetResultDisplay.textContent = "N/A";
+});
+
+// =========== TOGGLE BETTING ===========
+toggleBettingBtn.addEventListener("click", function () {
+  // Toggle the boolean
+  bettingActive = !bettingActive;
+  if (bettingActive) {
+    toggleBettingBtn.textContent = "Stop Betting";
+    bettingStatusMsg.innerHTML = `Betting is currently <strong>ON</strong>.`;
+  } else {
+    toggleBettingBtn.textContent = "Start Betting";
+    bettingStatusMsg.innerHTML = `Betting is currently <strong>OFF</strong>.`;
+  }
 });
 
 /* =============== BET PROGRESSION & LOGIC =============== */
@@ -369,7 +417,6 @@ function getNextBetMartingale(losses, base) {
 
 // Fibonacci
 function getNextBetFibonacci(losses, base) {
-  // fib(0)=1, fib(1)=1, fib(2)=2, etc.
   function fib(n) {
     if (n <= 1) return 1;
     let a = 1, b = 1;
@@ -403,12 +450,13 @@ function getNextBetPadovan(losses, base) {
 
 // Check if the last bet was a win or loss
 function checkLastBetResult(latestNumber) {
+  // If we haven't assigned a bet or bet size, skip
   if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
+
   let groupArray = currentBet.betType === "line" ? lineGroups : columnGroups;
   let targetGroup = groupArray.find((g) => g.name === currentBet.betTarget);
   if (!targetGroup) return;
 
-  // Did we win or lose?
   if (targetGroup.numbers.includes(latestNumber)) {
     lastBetResultDisplay.textContent = "WIN";
     let multiplier = currentBet.betType === "line" ? 5 : 2;
@@ -435,6 +483,15 @@ function updateBetSuggestion(resetToNA = false) {
   if (selectedNumbers.length < 5) {
     suggestedBetDisplay.textContent = "Not enough spins yet...";
     betSizeDisplay.textContent = "N/A";
+    progressionStepDisplay.textContent = "N/A";
+    winProbabilityDisplay.textContent = "N/A";
+    return;
+  }
+
+  // If betting is OFF, just display a note
+  if (!bettingActive) {
+    suggestedBetDisplay.textContent = "Betting is OFF";
+    betSizeDisplay.textContent = "0";
     progressionStepDisplay.textContent = "N/A";
     winProbabilityDisplay.textContent = "N/A";
     return;
@@ -469,7 +526,6 @@ function updateBetSuggestion(resetToNA = false) {
     } else if (betProgression === "fibonacci") {
       nextBet = getNextBetFibonacci(consecutiveLosses, baseStake);
     } else {
-      // padovan
       nextBet = getNextBetPadovan(consecutiveLosses, baseStake);
     }
   }
