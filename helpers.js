@@ -4,7 +4,7 @@ export function roundBetSize(value, roundingFactor) {
 }
 
 export function getNextBetMartingale(losses, base) {
-  return base * 2 ** losses;
+  return base * (2 ** losses);
 }
 
 export function getNextBetFibonacci(losses, base) {
@@ -12,7 +12,7 @@ export function getNextBetFibonacci(losses, base) {
     if (n <= 1) return 1;
     let a = 1, b = 1;
     for (let i = 2; i <= n; i++) {
-      let temp = a + b;
+      const temp = a + b;
       a = b;
       b = temp;
     }
