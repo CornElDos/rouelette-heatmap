@@ -1,9 +1,9 @@
-// main.js - Ingångspunkt för applikationen
+/* main.js - Ingångspunkt för applikationen */
 
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
-import { displayHeatmap, getColorForCount, getNumberFrequencies, createRouletteCell, displayStandardTable, displayRacetrack } from "./heatmap.js";
-import { updateLineCounters, updateColumnCounters, getMaxGapGroup, getGroupGap } from "./gapCounters.js";
-import { updateBetSuggestion, updateWinProbability, initBetSuggestion, consecutiveLosses, currentBet } from "./betSuggestion.js";
+import { displayHeatmap } from "./heatmap.js";
+import { updateLineCounters, updateColumnCounters } from "./gapCounters.js";
+import { updateBetSuggestion, initBetSuggestion, consecutiveLosses, currentBet } from "./betSuggestion.js";
 
 // Globala variabler
 let tableType = "european";
@@ -11,39 +11,34 @@ let selectedNumbers = [];
 const minSpinsForHeatmap = 5;
 let currentHeatmapLayout = null;
 
+// Bankroll & betting
 let bankroll = 1000;
-let stakeStyle = "fixed"; // "fixed" eller "percent"
+let stakeStyle = "fixed";
 let baseBet = 10;
 let basePercent = 10;
-let roundingFactor = 5; // 5 eller 10
-let betProgression = "martingale"; // "martingale", "fibonacci" eller "padovan"
+let roundingFactor = 5;
+let betProgression = "martingale";
+let bettingActive = false; // togglas via "Start Betting" / "Stop Betting"
 
-// För progression
-// (Notera: consecutiveLosses och currentBet importeras från betSuggestion.js)
-
-// Betting toggle
-let bettingActive = false;
-
-// Definiera line och column grupper
+// Line & Column groups
 const lineGroups = [
-  { name: "Line 1", numbers: ["1", "2", "3", "4", "5", "6"] },
-  { name: "Line 2", numbers: ["7", "8", "9", "10", "11", "12"] },
-  { name: "Line 3", numbers: ["13", "14", "15", "16", "17", "18"] },
-  { name: "Line 4", numbers: ["19", "20", "21", "22", "23", "24"] },
-  { name: "Line 5", numbers: ["25", "26", "27", "28", "29", "30"] },
-  { name: "Line 6", numbers: ["31", "32", "33", "34", "35", "36"] },
+  { name: "Line 1", numbers: ["1","2","3","4","5","6"] },
+  { name: "Line 2", numbers: ["7","8","9","10","11","12"] },
+  { name: "Line 3", numbers: ["13","14","15","16","17","18"] },
+  { name: "Line 4", numbers: ["19","20","21","22","23","24"] },
+  { name: "Line 5", numbers: ["25","26","27","28","29","30"] },
+  { name: "Line 6", numbers: ["31","32","33","34","35","36"] },
 ];
-
 const columnGroups = [
-  { name: "Column 1", numbers: ["1", "4", "7", "10", "13", "16", "19", "22", "25", "28", "31", "34"] },
-  { name: "Column 2", numbers: ["2", "5", "8", "11", "14", "17", "20", "23", "26", "29", "32", "35"] },
-  { name: "Column 3", numbers: ["3", "6", "9", "12", "15", "18", "21", "24", "27", "30", "33", "36"] },
+  { name: "Column 1", numbers: ["1","4","7","10","13","16","19","22","25","28","31","34"] },
+  { name: "Column 2", numbers: ["2","5","8","11","14","17","20","23","26","29","32","35"] },
+  { name: "Column 3", numbers: ["3","6","9","12","15","18","21","24","27","30","33","36"] },
 ];
 
-// För färgsättning av standardbordet
+// För standard layout-färg
 const redNumbers = ["1","3","5","7","9","12","14","16","18","19","21","23","25","27","30","32","34","36"];
 
-// Elementreferenser
+// Hämta elementreferenser
 const rouletteTypeSelectionDiv = document.getElementById("rouletteTypeSelection");
 const bankrollSectionDiv = document.getElementById("bankrollSection");
 const numberInputSectionDiv = document.getElementById("numberInputSection");
@@ -60,16 +55,16 @@ const progressionStepDisplay = document.getElementById("progressionStepDisplay")
 const winProbabilityDisplay = document.getElementById("winProbabilityDisplay");
 const lastBetResultDisplay = document.getElementById("lastBetResultDisplay");
 
-// Toggle Betting-knapp
+// Toggle Betting
 const toggleBettingBtn = document.getElementById("toggleBettingBtn");
 const bettingStatusMsg = document.getElementById("bettingStatusMsg");
 
-// Sätt upp eventlyssnare efter att DOM har laddats
+// När DOM laddats
 document.addEventListener("DOMContentLoaded", () => {
-  // Event för att välja bordstyp
+  // confirmType
   document.getElementById("confirmType").addEventListener("click", () => {
     const radios = document.getElementsByName("tableType");
-    for (const radio of radios) {
+    for (let radio of radios) {
       if (radio.checked) {
         tableType = radio.value;
         break;
@@ -79,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bankrollSectionDiv.classList.remove("d-none");
   });
 
-  // Hantera stake style-ändring
+  // stakeStyle
   const stakeStyleRadios = document.getElementsByName("stakeStyle");
   stakeStyleRadios.forEach(radio => {
     radio.addEventListener("change", () => {
@@ -100,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Bekräfta Bankroll & Settings
+  // confirmBankroll
   document.getElementById("confirmBankroll").addEventListener("click", () => {
     bankroll = parseInt(document.getElementById("bankrollInput").value) || 1000;
     stakeStyle = [...stakeStyleRadios].find(r => r.checked).value;
@@ -108,13 +103,16 @@ document.addEventListener("DOMContentLoaded", () => {
     basePercent = parseInt(document.getElementById("basePercentInput").value) || 10;
     roundingFactor = parseInt([...document.getElementsByName("rounding")].find(r => r.checked).value);
     betProgression = [...document.getElementsByName("betProgression")].find(r => r.checked).value;
-    
+
     bankrollSectionDiv.classList.add("d-none");
     setupNumberGrid();
     numberInputSectionDiv.classList.remove("d-none");
+
     updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
     updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
-    // Initiera bet-suggestion
+
+    // Visa bet suggestion
+    document.getElementById("betSuggestionArea").classList.remove("d-none");
     initBetSuggestion();
     updateBetSuggestion({
       selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
@@ -124,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     displayBankroll();
   });
 
-  // Sätt upp number grid
+  // setupNumberGrid
   function setupNumberGrid() {
     numberGridDiv.innerHTML = "";
     let numbers = [];
@@ -148,22 +146,24 @@ document.addEventListener("DOMContentLoaded", () => {
       btn.addEventListener("click", () => {
         selectedNumbers.push(num);
         selectedNumbersDisplay.textContent = selectedNumbers.join(", ");
+
         let currentCount = parseInt(btn.dataset.count);
         currentCount++;
         btn.dataset.count = currentCount;
         btn.textContent = num + (currentCount > 0 ? ` (${currentCount})` : "");
+
         if (selectedNumbers.length >= minSpinsForHeatmap) {
           heatmapOptionsDiv.classList.remove("d-none");
         }
         if (currentHeatmapLayout !== null) {
-          // Visa heatmap
-          const heatmapEl = displayHeatmap(currentHeatmapLayout, selectedNumbers, tableType, redNumbers);
+          const heatmapEl = displayHeatmap(currentHeatmapLayout, selectedNumbers, tableType);
           heatmapDisplayDiv.innerHTML = "";
+          heatmapDisplayDiv.classList.remove("d-none");
           heatmapDisplayDiv.appendChild(heatmapEl);
         }
         updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
         updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
-        
+
         // Endast om betting är på
         if (bettingActive) {
           checkLastBetResult(num);
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Reset-knapp
+  // resetNumbers
   resetButton.addEventListener("click", () => {
     selectedNumbers = [];
     selectedNumbersDisplay.textContent = "";
@@ -190,6 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
     heatmapDisplayDiv.innerHTML = "";
     heatmapDisplayDiv.classList.add("d-none");
     currentHeatmapLayout = null;
+
     updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
     updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
     currentBet.betType = null;
@@ -205,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBetResultDisplay.textContent = "N/A";
   });
 
-  // Toggle Betting-knapp
+  // Toggle Betting
   toggleBettingBtn.addEventListener("click", () => {
     bettingActive = !bettingActive;
     if (bettingActive) {
@@ -215,7 +216,6 @@ document.addEventListener("DOMContentLoaded", () => {
       toggleBettingBtn.textContent = "Start Betting";
       bettingStatusMsg.innerHTML = `Betting is currently <strong>OFF</strong>.`;
     }
-    // Vid toggle, uppdatera bet-suggestion (win probability uppdateras oavsett)
     updateBetSuggestion({
       selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
       betProgression, tableType, lineGroups, columnGroups, bettingActive,
@@ -223,12 +223,23 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Funktion för att visa bankroll
-  function displayBankroll() {
-    bankrollDisplay.textContent = bankroll.toString();
-  }
+  // Heatmap-knappar
+  document.getElementById("showStandardHeatmap").addEventListener("click", () => {
+    currentHeatmapLayout = "standard";
+    const heatmapEl = displayHeatmap("standard", selectedNumbers, tableType);
+    heatmapDisplayDiv.innerHTML = "";
+    heatmapDisplayDiv.classList.remove("d-none");
+    heatmapDisplayDiv.appendChild(heatmapEl);
+  });
 
-  // Exempel på checkLastBetResult (du kan anpassa logiken)
+  document.getElementById("showRacetrackHeatmap").addEventListener("click", () => {
+    currentHeatmapLayout = "racetrack";
+    const heatmapEl = displayHeatmap("racetrack", selectedNumbers, tableType);
+    heatmapDisplayDiv.innerHTML = "";
+    heatmapDisplayDiv.classList.remove("d-none");
+    heatmapDisplayDiv.appendChild(heatmapEl);
+  });
+
   function checkLastBetResult(latestNumber) {
     if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
     const groupArray = currentBet.betType === "line" ? lineGroups : columnGroups;
@@ -236,7 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!targetGroup) return;
     if (targetGroup.numbers.includes(latestNumber)) {
       lastBetResultDisplay.textContent = "WIN";
-      const multiplier = currentBet.betType === "line" ? 5 : 2;
+      const multiplier = (currentBet.betType === "line") ? 5 : 2;
       const winAmount = currentBet.betSize * multiplier;
       bankroll += winAmount;
       consecutiveLosses = 0;
@@ -246,11 +257,9 @@ document.addEventListener("DOMContentLoaded", () => {
       consecutiveLosses++;
     }
     displayBankroll();
-    // Uppdatera win probability efter resultat
-    updateBetSuggestion({
-      selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
-      betProgression, tableType, lineGroups, columnGroups, bettingActive,
-      elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
-    });
+  }
+
+  function displayBankroll() {
+    bankrollDisplay.textContent = bankroll.toString();
   }
 });
