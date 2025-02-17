@@ -50,9 +50,15 @@
       font-size: 16px;
       cursor: pointer;
     }
+    /* Gap display styles */
     #lineCounterDisplay, #columnCounterDisplay {
       margin-top: 15px;
-      text-align: center;
+    }
+    /* Container for number grid and gaps (side by side) */
+    #inputAndGapsContainer {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
     }
     /* Bet suggestion area */
     #betSuggestionArea {
@@ -86,7 +92,7 @@
     <button id="confirmType">Confirm</button>
   </div>
 
-  <!-- Step 1b: Ask for bankroll and bet type (once table type is confirmed) -->
+  <!-- Step 1b: Bankroll, stake style, rounding & progression selection -->
   <div id="bankrollSection" class="hidden">
     <div class="form-row">
       <label for="bankrollInput">Enter your bankroll:</label><br>
@@ -105,23 +111,36 @@
       <label for="basePercentInput">Base percentage (%):</label><br>
       <input type="number" id="basePercentInput" min="1" max="100" value="10">
     </div>
-    <button id="confirmBankroll">Confirm Bankroll</button>
+    <div class="form-row">
+      <label>Round bet size to:</label><br>
+      <input type="radio" name="rounding" value="5" checked> Nearest 5<br>
+      <input type="radio" name="rounding" value="10"> Nearest 10
+    </div>
+    <div class="form-row">
+      <label>Choose betting progression:</label><br>
+      <input type="radio" name="betProgression" value="martingale" checked> Martingale<br>
+      <input type="radio" name="betProgression" value="fibonacci"> Fibonacci<br>
+      <input type="radio" name="betProgression" value="padovan"> Padovan
+    </div>
+    <button id="confirmBankroll">Confirm Bankroll & Settings</button>
   </div>
 
   <!-- Step 2: Enter the numbers that hit the table -->
   <div id="numberInputSection" class="hidden">
     <p>Click on the numbers that hit the roulette table:</p>
-    <div id="numberGrid" class="roulette-grid"></div>
-    <div class="selected-numbers">
-      Selected numbers: <span id="selectedNumbersDisplay"></span>
+    <div id="inputAndGapsContainer">
+      <div>
+        <div id="numberGrid" class="roulette-grid"></div>
+        <div class="selected-numbers">
+          Selected numbers: <span id="selectedNumbersDisplay"></span>
+        </div>
+        <button id="resetNumbers">Reset</button>
+      </div>
+      <div>
+        <div id="lineCounterDisplay"></div>
+        <div id="columnCounterDisplay"></div>
+      </div>
     </div>
-    <!-- Reset button to clear the entered numbers -->
-    <button id="resetNumbers">Reset</button>
-
-    <!-- Line gap display -->
-    <div id="lineCounterDisplay"></div>
-    <!-- Column gap display -->
-    <div id="columnCounterDisplay"></div>
   </div>
 
   <!-- Step 3: Choose which heatmap to display -->
@@ -142,32 +161,36 @@
     <p><strong>Bankroll:</strong> <span id="bankrollDisplay"></span></p>
     <p><strong>Suggested Bet:</strong> <span id="suggestedBetDisplay"></span></p>
     <p><strong>Bet Size:</strong> <span id="betSizeDisplay"></span></p>
+    <p><strong>Win Probability:</strong> <span id="winProbabilityDisplay"></span></p>
     <p><strong>Last Bet Result:</strong> <span id="lastBetResultDisplay">N/A</span></p>
   </div>
 
   <script>
     // --- Global Variables ---
-    let tableType = 'european';  // Default is European (single zero)
+    let tableType = 'european';
     let selectedNumbers = [];
-    const minSpinsForHeatmap = 5; // At least 5 numbers are required to display the heatmap
-
+    const minSpinsForHeatmap = 5;
     let currentHeatmapLayout = null;
 
-    // Bankroll and bet info
+    // Bankroll and betting settings
     let bankroll = 1000;
-    let stakeStyle = 'fixed';  // or 'percent'
+    let stakeStyle = 'fixed';  // "fixed" or "percent"
     let baseBet = 10;
     let basePercent = 10;
+    let roundingFactor = 5;  // 5 or 10
+    let betProgression = 'martingale'; // "martingale", "fibonacci", or "padovan"
+
+    // For tracking consecutive losses (for progression systems)
+    let consecutiveLosses = 0;
 
     // Current bet suggestion
     let currentBet = {
-      betType: null,          // 'line' or 'column'
-      betTarget: null,        // e.g. "Line 3" or "Column 2"
-      betSize: 0,             // how much we will bet
-      cumulativeLosses: 0     // track total losses to recoup
+      betType: null,     // "line" or "column"
+      betTarget: null,   // e.g. "Line 3" or "Column 2"
+      betSize: 0
     };
 
-    // Define the 6 line groups (line bets) – only numbers 1-36 are considered
+    // Define line groups
     const lineGroups = [
       { name: "Line 1", numbers: ["1", "2", "3", "4", "5", "6"] },
       { name: "Line 2", numbers: ["7", "8", "9", "10", "11", "12"] },
@@ -177,7 +200,7 @@
       { name: "Line 6", numbers: ["31", "32", "33", "34", "35", "36"] }
     ];
 
-    // Define the 3 column groups – also only numbers 1-36
+    // Define column groups
     const columnGroups = [
       { name: "Column 1", numbers: ["1","4","7","10","13","16","19","22","25","28","31","34"] },
       { name: "Column 2", numbers: ["2","5","8","11","14","17","20","23","26","29","32","35"] },
@@ -194,16 +217,15 @@
     const numberGridDiv = document.getElementById('numberGrid');
     const resetButton = document.getElementById('resetNumbers');
 
-    // Bet suggestion area
     const betSuggestionAreaDiv = document.getElementById('betSuggestionArea');
     const bankrollDisplay = document.getElementById('bankrollDisplay');
     const suggestedBetDisplay = document.getElementById('suggestedBetDisplay');
     const betSizeDisplay = document.getElementById('betSizeDisplay');
+    const winProbabilityDisplay = document.getElementById('winProbabilityDisplay');
     const lastBetResultDisplay = document.getElementById('lastBetResultDisplay');
 
     // --- Event Handlers ---
     document.getElementById('confirmType').addEventListener('click', function() {
-      // Read the selected table type
       const radios = document.getElementsByName('tableType');
       for (let radio of radios) {
         if (radio.checked) {
@@ -211,12 +233,11 @@
           break;
         }
       }
-      // Hide the table type selection and show the bankroll section
       rouletteTypeSelectionDiv.classList.add('hidden');
       bankrollSectionDiv.classList.remove('hidden');
     });
 
-    // Switch between fixed bet input and percentage input
+    // Stake style change
     const stakeStyleRadios = document.getElementsByName('stakeStyle');
     stakeStyleRadios.forEach(radio => {
       radio.addEventListener('change', function() {
@@ -224,7 +245,6 @@
         toggleBetInput();
       });
     });
-
     function toggleBetInput() {
       const baseBetRow = document.getElementById('baseBetRow');
       const basePercentRow = document.getElementById('basePercentRow');
@@ -237,23 +257,22 @@
       }
     }
 
+    // Read rounding and progression selections on bankroll confirmation
     document.getElementById('confirmBankroll').addEventListener('click', function() {
-      // Read bankroll
       bankroll = parseInt(document.getElementById('bankrollInput').value) || 1000;
       stakeStyle = [...stakeStyleRadios].find(r => r.checked).value;
       baseBet = parseInt(document.getElementById('baseBetInput').value) || 10;
       basePercent = parseInt(document.getElementById('basePercentInput').value) || 10;
+      roundingFactor = parseInt([...document.getElementsByName('rounding')].find(r => r.checked).value);
+      betProgression = [...document.getElementsByName('betProgression')].find(r => r.checked).value;
 
-      // Hide bankroll section, show number input
       bankrollSectionDiv.classList.add('hidden');
       setupNumberGrid();
       numberInputSectionDiv.classList.remove('hidden');
       updateLineCounters();
       updateColumnCounters();
-
-      // Initialize bet suggestion
       betSuggestionAreaDiv.classList.remove('hidden');
-      updateBetSuggestion(); // will show "N/A" until we have 5 spins
+      updateBetSuggestion();
       displayBankroll();
     });
 
@@ -261,20 +280,17 @@
       numberGridDiv.innerHTML = '';
       let numbers = [];
       if (tableType === 'european') {
-        // European: 0 and 1-36
         numbers.push('0');
         for (let i = 1; i <= 36; i++) {
           numbers.push(i.toString());
         }
       } else {
-        // American: 0, 00 and 1-36
         numbers.push('0');
         numbers.push('00');
         for (let i = 1; i <= 36; i++) {
           numbers.push(i.toString());
         }
       }
-      // Create a button for each number.
       numbers.forEach(num => {
         let btn = document.createElement('button');
         btn.textContent = num;
@@ -282,36 +298,25 @@
         btn.dataset.number = num;
         btn.dataset.count = 0;
         btn.addEventListener('click', function() {
-          // Add the number to the list
           selectedNumbers.push(num);
           updateSelectedNumbersDisplay();
-
-          // Update the count on the button
           let currentCount = parseInt(btn.dataset.count);
           currentCount++;
           btn.dataset.count = currentCount;
           btn.textContent = num + (currentCount > 0 ? ' (' + currentCount + ')' : '');
-
-          // Show heatmap options as soon as at least 5 numbers have been registered
           if (selectedNumbers.length >= minSpinsForHeatmap) {
             heatmapOptionsDiv.classList.remove('hidden');
           }
-          // Update heatmap if already visible
           if (currentHeatmapLayout !== null) {
             displayHeatmap(currentHeatmapLayout);
           }
-          // Update line and column counters each spin
           updateLineCounters();
           updateColumnCounters();
-
-          // Check if the last suggested bet was a win or a loss
           checkLastBetResult(num);
-          // Then propose a new bet (or update the current one) if we have enough data
           updateBetSuggestion();
         });
         numberGridDiv.appendChild(btn);
       });
-      // Adjust grid layout (e.g., 6 columns)
       numberGridDiv.style.gridTemplateColumns = 'repeat(6, 50px)';
     }
 
@@ -319,7 +324,7 @@
       selectedNumbersDisplay.textContent = selectedNumbers.join(', ');
     }
 
-    // --- Line & Column Gaps ---
+    // --- Gap Counters ---
     function updateLineCounters() {
       let displayHTML = "<h3>Line Gaps</h3>";
       lineGroups.forEach(group => {
@@ -360,7 +365,6 @@
       if (count >= 3) return '#ff6666';
       return '#fff';
     }
-
     document.getElementById('showStandardHeatmap').addEventListener('click', function() {
       currentHeatmapLayout = 'standard';
       displayHeatmap('standard');
@@ -369,7 +373,6 @@
       currentHeatmapLayout = 'racetrack';
       displayHeatmap('racetrack');
     });
-
     function getNumberFrequencies() {
       let frequencies = {};
       let possibleNumbers = [];
@@ -392,16 +395,13 @@
       });
       return frequencies;
     }
-
     function displayHeatmap(layoutType) {
       heatmapDisplayDiv.innerHTML = '';
       heatmapDisplayDiv.classList.remove('hidden');
       const frequencies = getNumberFrequencies();
-
       if (layoutType === 'standard') {
         let table = document.createElement('table');
         if (tableType === 'european') {
-          // Top row with 0 spanning three columns
           let row0 = document.createElement('tr');
           let cell0 = document.createElement('td');
           cell0.colSpan = 3;
@@ -410,7 +410,6 @@
           cell0.style.backgroundColor = getColorForCount(frequencies['0']);
           row0.appendChild(cell0);
           table.appendChild(row0);
-          // Rows for numbers 1-36 in 12 rows of 3 columns each
           for (let i = 0; i < 12; i++) {
             let row = document.createElement('tr');
             for (let j = 0; j < 3; j++) {
@@ -424,7 +423,6 @@
             table.appendChild(row);
           }
         } else {
-          // American layout
           let row0 = document.createElement('tr');
           let cell0 = document.createElement('td');
           cell0.textContent = '0';
@@ -438,7 +436,6 @@
           cell00.colSpan = 2;
           row0.appendChild(cell00);
           table.appendChild(row0);
-          // Rows for numbers 1-36
           for (let i = 0; i < 12; i++) {
             let row = document.createElement('tr');
             for (let j = 0; j < 3; j++) {
@@ -454,7 +451,6 @@
         }
         heatmapDisplayDiv.appendChild(table);
       } else {
-        // Racetrack
         let racetrackDiv = document.createElement('div');
         racetrackDiv.style.display = 'flex';
         racetrackDiv.style.flexWrap = 'wrap';
@@ -500,131 +496,162 @@
       currentHeatmapLayout = null;
       updateLineCounters();
       updateColumnCounters();
-
-      // Reset the bet suggestion
+      // Reset bet suggestion and consecutive losses
       currentBet.betType = null;
       currentBet.betTarget = null;
       currentBet.betSize = 0;
-      currentBet.cumulativeLosses = 0;
+      consecutiveLosses = 0;
       displayBankroll();
-      updateBetSuggestion(true); // Force an update that basically says "N/A" again
+      updateBetSuggestion(true);
       lastBetResultDisplay.textContent = 'N/A';
     });
 
-    // --- Bet Suggestion Logic ---
+    // --- Betting Progression Functions & Rounding ---
+    function roundBetSize(value) {
+      return Math.ceil(value / roundingFactor) * roundingFactor;
+    }
 
-    // 1) Figure out if the last bet was a win or loss, update bankroll accordingly
-    function checkLastBetResult(latestNumber) {
-      if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) {
-        // No bet was suggested or no bet size set yet
-        return;
+    function getNextBetMartingale(losses, base) {
+      return base * (2 ** losses);
+    }
+
+    function getNextBetFibonacci(losses, base) {
+      // Fibonacci: fib(0)=1, fib(1)=1, fib(2)=2, etc.
+      function fib(n) {
+        if(n<=1)return 1;
+        let a=1, b=1;
+        for(let i=2; i<=n; i++){
+          let temp = a+b;
+          a = b;
+          b = temp;
+        }
+        return b;
       }
-      // If we don't have at least 5 spins or a bet was not "active," do nothing
-      // We'll consider the bet active if currentBet.betSize > 0
+      return base * fib(losses);
+    }
 
-      // Check if latestNumber is in the bet's group
+    function getNextBetPadovan(losses, base) {
+      // Padovan: P(0)=1, P(1)=1, P(2)=1, P(n)=P(n-2)+P(n-3)
+      function padovan(n) {
+        if(n < 3) return 1;
+        let p0 = 1, p1 = 1, p2 = 1;
+        let p;
+        for(let i=3; i<=n; i++){
+          p = p0 + p1; // P(n)=P(n-3)+P(n-2)
+          p0 = p1;
+          p1 = p2;
+          p2 = p;
+        }
+        return p;
+      }
+      return base * padovan(losses);
+    }
+
+    // --- Bet Suggestion Logic ---
+    function checkLastBetResult(latestNumber) {
+      if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
       let groupArray = currentBet.betType === 'line' ? lineGroups : columnGroups;
       let targetGroup = groupArray.find(g => g.name === currentBet.betTarget);
       if (!targetGroup) return;
-
-      // If the group contains the latestNumber => it's a win
       if (targetGroup.numbers.includes(latestNumber)) {
-        // Win
         lastBetResultDisplay.textContent = 'WIN';
-        // Payout logic: line bet pays 5:1, column pays 2:1 in real roulette
-        // but let's keep it simple. We'll treat line bet as 5:1, column bet as 2:1
+        // Win: add winnings and reset consecutive losses
         let multiplier = (currentBet.betType === 'line') ? 5 : 2;
         let winAmount = currentBet.betSize * multiplier;
-        bankroll += winAmount; // add the winnings
-        currentBet.cumulativeLosses = 0; // reset
-        // Next bet returns to base stake
+        bankroll += winAmount;
+        consecutiveLosses = 0;
       } else {
-        // Loss
         lastBetResultDisplay.textContent = 'LOSS';
-        bankroll -= currentBet.betSize; // subtract the stake
-        currentBet.cumulativeLosses += currentBet.betSize; 
+        bankroll -= currentBet.betSize;
+        consecutiveLosses++;
       }
       displayBankroll();
     }
 
-    // 2) Suggest or update the next bet
     function updateBetSuggestion(resetToNA = false) {
-      // If resetToNA is true, just show "N/A"
       if (resetToNA) {
         suggestedBetDisplay.textContent = 'N/A';
         betSizeDisplay.textContent = 'N/A';
+        winProbabilityDisplay.textContent = 'N/A';
         return;
       }
-
-      // We only suggest a bet if we have at least 5 spins
       if (selectedNumbers.length < 5) {
         suggestedBetDisplay.textContent = 'Not enough spins yet...';
         betSizeDisplay.textContent = 'N/A';
+        winProbabilityDisplay.textContent = 'N/A';
         return;
       }
-
-      // 2a) Pick the group with the highest gap from lines + columns
+      // Pick the group with the highest gap (from lines and columns)
       let bestLine = getMaxGapGroup(lineGroups);
       let bestColumn = getMaxGapGroup(columnGroups);
-
-      // Compare which has the bigger gap
       if (bestLine.gap >= bestColumn.gap) {
         currentBet.betType = 'line';
-        currentBet.betTarget = bestLine.name; // e.g. "Line 3"
+        currentBet.betTarget = bestLine.name;
       } else {
         currentBet.betType = 'column';
-        currentBet.betTarget = bestColumn.name; // e.g. "Column 2"
+        currentBet.betTarget = bestColumn.name;
       }
-
-      // 2b) Calculate the next bet size
-      // If we have no cumulativeLosses, it's the base bet
-      // else do a simple "recover + 1" approach
-      let nextBet = 0;
-      if (currentBet.cumulativeLosses === 0) {
-        // base stake
-        if (stakeStyle === 'fixed') {
-          nextBet = baseBet;
-        } else {
-          // percent of bankroll
-          nextBet = Math.floor((bankroll * basePercent) / 100);
-          if (nextBet < 1) nextBet = 1; // ensure at least 1
-        }
+      // Calculate next bet size using chosen progression:
+      let baseStake = 0;
+      if (stakeStyle === 'fixed') {
+        baseStake = baseBet;
       } else {
-        // Martingale style: recover all previous losses + 1 unit
-        // Note: real line bet pays 5:1, column pays 2:1; we’ll do a simple approach
-        let payoutMultiplier = (currentBet.betType === 'line') ? 5 : 2;
-        // If we want to recover currentBet.cumulativeLosses + 1
-        // nextBet * payoutMultiplier = cumulativeLosses + nextBet + 1
-        // nextBet * (payoutMultiplier - 1) = cumulativeLosses + 1
-        // nextBet = (cumulativeLosses + 1) / (payoutMultiplier - 1)
-        nextBet = Math.ceil((currentBet.cumulativeLosses + 1) / (payoutMultiplier - 1));
+        baseStake = Math.floor((bankroll * basePercent) / 100);
+        if (baseStake < 1) baseStake = 1;
       }
-
+      let nextBet = 0;
+      if (consecutiveLosses === 0) {
+        nextBet = baseStake;
+      } else {
+        if (betProgression === 'martingale') {
+          nextBet = getNextBetMartingale(consecutiveLosses, baseStake);
+        } else if (betProgression === 'fibonacci') {
+          nextBet = getNextBetFibonacci(consecutiveLosses, baseStake);
+        } else if (betProgression === 'padovan') {
+          nextBet = getNextBetPadovan(consecutiveLosses, baseStake);
+        }
+      }
+      nextBet = roundBetSize(nextBet);
       currentBet.betSize = nextBet;
-
-      // Update the UI
       suggestedBetDisplay.textContent = `${currentBet.betTarget} (${currentBet.betType})`;
       betSizeDisplay.textContent = currentBet.betSize.toString();
+
+      // Calculate win probability based on base probability and gap:
+      let baseProbability = 0;
+      if (tableType === 'european') {
+        baseProbability = (currentBet.betType === 'line') ? (6/37) : (12/37);
+      } else {
+        baseProbability = (currentBet.betType === 'line') ? (6/38) : (12/38);
+      }
+      // Get gap for the chosen group:
+      let gap = getGroupGap(currentBet.betType === 'line' ? lineGroups : columnGroups, currentBet.betTarget);
+      let winProbability = 1 - Math.pow((1 - baseProbability), (gap + 1));
+      winProbabilityDisplay.textContent = (winProbability * 100).toFixed(1) + '%';
     }
 
-    // Helper to find the group with the maximum gap
     function getMaxGapGroup(groupArray) {
       let bestGroup = { name: '', gap: -1 };
       for (let group of groupArray) {
-        let lastIndex = -1;
-        for (let i = selectedNumbers.length - 1; i >= 0; i--) {
-          if (group.numbers.includes(selectedNumbers[i])) {
-            lastIndex = i;
-            break;
-          }
-        }
-        let gap = (lastIndex === -1) ? selectedNumbers.length : (selectedNumbers.length - lastIndex - 1);
+        let gap = getGroupGap(groupArray, group.name);
         if (gap > bestGroup.gap) {
           bestGroup.name = group.name;
           bestGroup.gap = gap;
         }
       }
       return bestGroup;
+    }
+
+    function getGroupGap(groupArray, targetName) {
+      let group = groupArray.find(g => g.name === targetName);
+      if (!group) return 0;
+      let lastIndex = -1;
+      for (let i = selectedNumbers.length - 1; i >= 0; i--) {
+        if (group.numbers.includes(selectedNumbers[i])) {
+          lastIndex = i;
+          break;
+        }
+      }
+      return (lastIndex === -1) ? selectedNumbers.length : (selectedNumbers.length - lastIndex - 1);
     }
 
     function displayBankroll() {
