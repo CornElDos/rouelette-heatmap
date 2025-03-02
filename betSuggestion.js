@@ -2,7 +2,7 @@
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
 import { getMaxGapGroup } from "./gapCounters.js";
 
-// Exportera aktuellt bet (vi hanterar losses i main.js)
+// Exportera aktuellt bet
 export let currentBet = {
   betType: null, // "line" eller "column"
   betTarget: null,
@@ -10,7 +10,7 @@ export let currentBet = {
 };
 
 export function initBetSuggestion() {
-  // Initiera eventuellt UI för bet-suggestion, om nödvändigt.
+  // Eventuell initiering (om nödvändigt)
 }
 
 export function updateBetSuggestion(params) {
@@ -23,13 +23,12 @@ export function updateBetSuggestion(params) {
     roundingFactor,
     betProgression,
     tableType,
-    lineGroups,
-    columnGroups,
+    lineGroups,       // Här skickar du in din Double Street-grupper (t.ex. doubleStreetGroups)
+    columnGroups,     // Här skickar du in kolumn-grupperna
     bettingActive,
-    losses, // skickat från main.js
-    elements
+    losses,           // Antalet förlustspel (losses) hanteras i main.js
+    elements          // { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
   } = params;
-  // elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
 
   if (selectedNumbers.length < 5) {
     elements.suggestedBetDisplay.textContent = "Not enough spins yet...";
@@ -46,7 +45,7 @@ export function updateBetSuggestion(params) {
     return;
   }
 
-  // Välj den grupp med högst gap (använder doubleStreetGroups – dessa skickas från main.js)
+  // Välj den grupp med högst gap (använder nu Double Street-grupper)
   const bestDouble = getMaxGapGroup(lineGroups, selectedNumbers);
   const bestColumn = getMaxGapGroup(columnGroups, selectedNumbers);
   if (bestDouble.gap >= bestColumn.gap) {
@@ -63,7 +62,7 @@ export function updateBetSuggestion(params) {
     : Math.floor((bankroll * basePercent) / 100);
   if (baseStake < 1) baseStake = 1;
 
-  // Räkna ut nästa bet storlek
+  // Räkna ut nästa bet storlek utifrån antalet förlustspel (losses)
   let nextBet = 0;
   if (losses === 0) {
     nextBet = baseStake;
