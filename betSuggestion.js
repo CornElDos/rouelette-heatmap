@@ -2,8 +2,7 @@
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
 import { getMaxGapGroup } from "./gapCounters.js";
 
-// Exportera progression-variabler
-export let consecutiveLosses = 0;
+// Ta bort exporten av consecutiveLosses – vi hanterar detta i main.js
 export let currentBet = {
   betType: null, // "line" eller "column"
   betTarget: null,
@@ -11,7 +10,7 @@ export let currentBet = {
 };
 
 export function initBetSuggestion() {
-  // Om du vill initiera UI för bet-suggestion, gör det här.
+  // Initiera eventuellt UI för bet-suggestion, om nödvändigt.
 }
 
 export function updateBetSuggestion(params) {
@@ -27,6 +26,7 @@ export function updateBetSuggestion(params) {
     lineGroups,
     columnGroups,
     bettingActive,
+    losses, // nytt: antalet förlustspel
     elements
   } = params;
   // elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
@@ -63,17 +63,17 @@ export function updateBetSuggestion(params) {
     : Math.floor((bankroll * basePercent) / 100);
   if (baseStake < 1) baseStake = 1;
 
-  // Räkna ut nästa bet storlek
+  // Räkna ut nästa bet storlek utifrån antalet förlustspel (losses)
   let nextBet = 0;
-  if (consecutiveLosses === 0) {
+  if (losses === 0) {
     nextBet = baseStake;
   } else {
     if (betProgression === "martingale") {
-      nextBet = getNextBetMartingale(consecutiveLosses, baseStake);
+      nextBet = getNextBetMartingale(losses, baseStake);
     } else if (betProgression === "fibonacci") {
-      nextBet = getNextBetFibonacci(consecutiveLosses, baseStake);
+      nextBet = getNextBetFibonacci(losses, baseStake);
     } else {
-      nextBet = getNextBetPadovan(consecutiveLosses, baseStake);
+      nextBet = getNextBetPadovan(losses, baseStake);
     }
   }
   nextBet = roundBetSize(nextBet, roundingFactor);
@@ -82,7 +82,7 @@ export function updateBetSuggestion(params) {
   // Uppdatera UI
   elements.suggestedBetDisplay.textContent = `${currentBet.betTarget} (${currentBet.betType})`;
   elements.betSizeDisplay.textContent = currentBet.betSize.toString();
-  elements.progressionStepDisplay.textContent = consecutiveLosses.toString();
+  elements.progressionStepDisplay.textContent = losses.toString();
 
   updateWinProbability(params);
 }
