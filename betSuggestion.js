@@ -2,7 +2,7 @@
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
 import { getMaxGapGroup } from "./gapCounters.js";
 
-// Ta bort exporten av consecutiveLosses – vi hanterar detta i main.js
+// Exportera aktuellt bet (vi hanterar losses i main.js)
 export let currentBet = {
   betType: null, // "line" eller "column"
   betTarget: null,
@@ -26,7 +26,7 @@ export function updateBetSuggestion(params) {
     lineGroups,
     columnGroups,
     bettingActive,
-    losses, // nytt: antalet förlustspel
+    losses, // skickat från main.js
     elements
   } = params;
   // elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
@@ -46,12 +46,12 @@ export function updateBetSuggestion(params) {
     return;
   }
 
-  // Välj den grupp med högst gap
-  const bestLine = getMaxGapGroup(lineGroups, selectedNumbers);
+  // Välj den grupp med högst gap (använder doubleStreetGroups – dessa skickas från main.js)
+  const bestDouble = getMaxGapGroup(lineGroups, selectedNumbers);
   const bestColumn = getMaxGapGroup(columnGroups, selectedNumbers);
-  if (bestLine.gap >= bestColumn.gap) {
+  if (bestDouble.gap >= bestColumn.gap) {
     currentBet.betType = "line";
-    currentBet.betTarget = bestLine.name;
+    currentBet.betTarget = bestDouble.name;
   } else {
     currentBet.betType = "column";
     currentBet.betTarget = bestColumn.name;
@@ -63,7 +63,7 @@ export function updateBetSuggestion(params) {
     : Math.floor((bankroll * basePercent) / 100);
   if (baseStake < 1) baseStake = 1;
 
-  // Räkna ut nästa bet storlek utifrån antalet förlustspel (losses)
+  // Räkna ut nästa bet storlek
   let nextBet = 0;
   if (losses === 0) {
     nextBet = baseStake;
@@ -93,12 +93,12 @@ export function updateWinProbability(params) {
     elements.winProbabilityDisplay.textContent = "N/A";
     return;
   }
-  const bestLine = getMaxGapGroup(lineGroups, selectedNumbers);
+  const bestDouble = getMaxGapGroup(lineGroups, selectedNumbers);
   const bestColumn = getMaxGapGroup(columnGroups, selectedNumbers);
   let gap = 0;
   let baseProbability = 0;
-  if (bestLine.gap >= bestColumn.gap) {
-    gap = bestLine.gap;
+  if (bestDouble.gap >= bestColumn.gap) {
+    gap = bestDouble.gap;
     baseProbability = tableType === "european" ? 6/37 : 6/38;
   } else {
     gap = bestColumn.gap;
