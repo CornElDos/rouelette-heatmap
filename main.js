@@ -127,4 +127,175 @@ document.addEventListener("DOMContentLoaded", () => {
     bankroll = parseInt(document.getElementById("bankrollInput").value) || 1000;
     stakeStyle = [...stakeStyleRadios].find(r => r.checked).value;
     baseBet = parseInt(document.getElementById("baseBetInput").value) || 10;
-    basePercent = parseInt(document.getElement
+    basePercent = parseInt(document.getElementById("basePercentInput").value) || 10;
+    roundingFactor = parseInt([...document.getElementsByName("rounding")].find(r => r.checked).value);
+    betProgression = [...document.getElementsByName("betProgression")].find(r => r.checked).value;
+
+    bankrollSectionDiv.classList.add("d-none");
+    setupNumberGrid();
+    numberInputSectionDiv.classList.remove("d-none");
+
+    // Uppdatera gap-räknare
+    updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, doubleStreetCounterDisplay);
+    updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
+    updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
+    totalSpinsDisplay.textContent = `Total Spins: ${selectedNumbers.length}`;
+
+    // Visa Bet Suggestion
+    document.getElementById("betSuggestionArea").classList.remove("d-none");
+    initBetSuggestion();
+    updateBetSuggestion({
+      selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
+      betProgression, tableType, lineGroups: doubleStreetGroups, columnGroups, bettingActive, losses,
+      elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
+    });
+    displayBankroll();
+  });
+
+  // 4. Setup Number Grid
+  function setupNumberGrid() {
+    numberGridDiv.innerHTML = "";
+    let numbers = [];
+    if (tableType === "european") {
+      numbers.push("0");
+      for (let i = 1; i <= 36; i++) {
+        numbers.push(i.toString());
+      }
+    } else {
+      numbers.push("0", "00");
+      for (let i = 1; i <= 36; i++) {
+        numbers.push(i.toString());
+      }
+    }
+    numbers.forEach(num => {
+      const btn = document.createElement("button");
+      btn.textContent = num;
+      btn.className = "roulette-button";
+      btn.dataset.number = num;
+      btn.dataset.count = 0;
+      btn.addEventListener("click", () => {
+        selectedNumbers.push(num);
+        selectedNumbersDisplay.textContent = selectedNumbers.join(", ");
+
+        let currentCount = parseInt(btn.dataset.count);
+        currentCount++;
+        btn.dataset.count = currentCount;
+        btn.textContent = num + (currentCount > 0 ? ` (${currentCount})` : "");
+
+        if (selectedNumbers.length >= minSpinsForHeatmap) {
+          heatmapOptionsDiv.classList.remove("d-none");
+        }
+        if (currentHeatmapLayout !== null) {
+          const heatmapEl = displayHeatmap(currentHeatmapLayout, selectedNumbers, tableType, redNumbers);
+          heatmapDisplayDiv.innerHTML = "";
+          heatmapDisplayDiv.classList.remove("d-none");
+          heatmapDisplayDiv.appendChild(heatmapEl);
+        }
+        updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, doubleStreetCounterDisplay);
+        updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
+        updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
+        totalSpinsDisplay.textContent = `Total Spins: ${selectedNumbers.length}`;
+
+        // Endast om betting är aktivt
+        if (bettingActive) {
+          checkLastBetResult(num);
+          updateBetSuggestion({
+            selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
+            betProgression, tableType, lineGroups: doubleStreetGroups, columnGroups, bettingActive, losses,
+            elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
+          });
+        }
+      });
+      numberGridDiv.appendChild(btn);
+    });
+  }
+
+  // 5. Reset-knapp
+  resetButton.addEventListener("click", () => {
+    selectedNumbers = [];
+    selectedNumbersDisplay.textContent = "";
+    heatmapOptionsDiv.classList.add("d-none");
+    Array.from(numberGridDiv.getElementsByClassName("roulette-button")).forEach(btn => {
+      btn.dataset.count = 0;
+      btn.textContent = btn.dataset.number;
+    });
+    heatmapDisplayDiv.innerHTML = "";
+    heatmapDisplayDiv.classList.add("d-none");
+    currentHeatmapLayout = null;
+
+    updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, doubleStreetCounterDisplay);
+    updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
+    updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
+    totalSpinsDisplay.textContent = `Total Spins: ${selectedNumbers.length}`;
+    
+    currentBet.betType = null;
+    currentBet.betTarget = null;
+    currentBet.betSize = 0;
+    losses = 0;
+    displayBankroll();
+    updateBetSuggestion({
+      selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
+      betProgression, tableType, lineGroups: doubleStreetGroups, columnGroups, bettingActive, losses,
+      elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
+    });
+    lastBetResultDisplay.textContent = "N/A";
+  });
+
+  // 6. Toggle Betting
+  toggleBettingBtn.addEventListener("click", () => {
+    bettingActive = !bettingActive;
+    if (bettingActive) {
+      toggleBettingBtn.textContent = "Stop Betting";
+      bettingStatusMsg.innerHTML = `Betting is currently <strong>ON</strong>.`;
+    } else {
+      toggleBettingBtn.textContent = "Start Betting";
+      bettingStatusMsg.innerHTML = `Betting is currently <strong>OFF</strong>.`;
+    }
+    updateBetSuggestion({
+      selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
+      betProgression, tableType, lineGroups: doubleStreetGroups, columnGroups, bettingActive, losses,
+      elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
+    });
+  });
+
+  // 7. Heatmap-knappar
+  document.getElementById("showStandardHeatmap").addEventListener("click", () => {
+    currentHeatmapLayout = "standard";
+    const heatmapEl = displayHeatmap("standard", selectedNumbers, tableType, redNumbers);
+    heatmapDisplayDiv.innerHTML = "";
+    heatmapDisplayDiv.classList.remove("d-none");
+    heatmapDisplayDiv.appendChild(heatmapEl);
+  });
+
+  document.getElementById("showRacetrackHeatmap").addEventListener("click", () => {
+    currentHeatmapLayout = "racetrack";
+    const heatmapEl = displayHeatmap("racetrack", selectedNumbers, tableType, redNumbers);
+    heatmapDisplayDiv.innerHTML = "";
+    heatmapDisplayDiv.classList.remove("d-none");
+    heatmapDisplayDiv.appendChild(heatmapEl);
+  });
+
+  // 8. checkLastBetResult
+  function checkLastBetResult(latestNumber) {
+    if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
+    const groupArray = currentBet.betType === "line" ? doubleStreetGroups : columnGroups;
+    const targetGroup = groupArray.find(g => g.name === currentBet.betTarget);
+    if (!targetGroup) return;
+    if (targetGroup.numbers.includes(latestNumber)) {
+      lastBetResultDisplay.textContent = "WIN";
+      const multiplier = (currentBet.betType === "line") ? 5 : 2;
+      const winAmount = currentBet.betSize * multiplier;
+      bankroll += winAmount;
+      losses = 0;
+    } else {
+      lastBetResultDisplay.textContent = "LOSS";
+      bankroll -= currentBet.betSize;
+      losses++;
+    }
+    displayBankroll();
+  }
+
+  function displayBankroll() {
+    bankrollDisplay.textContent = bankroll.toString();
+  }
+});
