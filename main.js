@@ -1,7 +1,6 @@
 /* main.js - Ingångspunkt för applikationen */
 
-import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
-import { displayHeatmap } from "./heatmap.js";//
+import { displayHeatmap } from "./heatmap.js";
 import { updateLineCounters, updateColumnCounters, updateDoubleStreetCounters, updateSingleStreetCounters, updateDozenCounters } from "./gapCounters.js";
 import { updateBetSuggestion, initBetSuggestion, currentBet } from "./betSuggestion.js";
 
@@ -18,13 +17,13 @@ let baseBet = 10;
 let basePercent = 10;
 let roundingFactor = 5;
 let betProgression = "martingale";
-let bettingActive = false; // togglas via "Start Betting" / "Stop Betting"
+let bettingActive = false;
 
 // Hantera antalet förlustspel
 let losses = 0;
 
 // Definiera grupper
-// Double Street = grupper med 6 nummer (tidigare lineGroups)
+// Double Street (6 nummer per grupp)
 const doubleStreetGroups = [
   { name: "Double Street 1", numbers: ["1","2","3","4","5","6"] },
   { name: "Double Street 2", numbers: ["7","8","9","10","11","12"] },
@@ -33,8 +32,7 @@ const doubleStreetGroups = [
   { name: "Double Street 5", numbers: ["25","26","27","28","29","30"] },
   { name: "Double Street 6", numbers: ["31","32","33","34","35","36"] },
 ];
-
-// Single Street = grupper med 3 nummer (12 rader)
+// Single Street (3 nummer per grupp)
 const singleStreetGroups = [
   { name: "Single Street 1", numbers: ["1","2","3"] },
   { name: "Single Street 2", numbers: ["4","5","6"] },
@@ -49,8 +47,7 @@ const singleStreetGroups = [
   { name: "Single Street 11", numbers: ["31","32","33"] },
   { name: "Single Street 12", numbers: ["34","35","36"] },
 ];
-
-// Dozen = grupper med 12 nummer (1-12, 13-24, 25-36)
+// Dozen (12 nummer per grupp)
 const dozenGroups = [
   { name: "Dozen 1", numbers: ["1","2","3","4","5","6","7","8","9","10","11","12"] },
   { name: "Dozen 2", numbers: ["13","14","15","16","17","18","19","20","21","22","23","24"] },
@@ -77,7 +74,7 @@ const progressionStepDisplay = document.getElementById("progressionStepDisplay")
 const winProbabilityDisplay = document.getElementById("winProbabilityDisplay");
 const lastBetResultDisplay = document.getElementById("lastBetResultDisplay");
 
-// För gap-räknare – vi använder nu nya element
+// Gap-counter element (nya)
 const doubleStreetCounterDisplay = document.getElementById("doubleStreetCounterDisplay");
 const singleStreetCounterDisplay = document.getElementById("singleStreetCounterDisplay");
 const dozenCounterDisplay = document.getElementById("dozenCounterDisplay");
@@ -135,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupNumberGrid();
     numberInputSectionDiv.classList.remove("d-none");
 
-    // Uppdatera gap-räknare
+    // Uppdatera de nya gapräknarna
     updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, doubleStreetCounterDisplay);
     updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
     updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
@@ -191,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
           heatmapDisplayDiv.classList.remove("d-none");
           heatmapDisplayDiv.appendChild(heatmapEl);
         }
+        // Uppdatera gapräknare
         updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, doubleStreetCounterDisplay);
         updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
         updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
@@ -227,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateSingleStreetCounters(singleStreetGroups, selectedNumbers, singleStreetCounterDisplay);
     updateDozenCounters(dozenGroups, selectedNumbers, dozenCounterDisplay);
     totalSpinsDisplay.textContent = `Total Spins: ${selectedNumbers.length}`;
-    
+
     currentBet.betType = null;
     currentBet.betTarget = null;
     currentBet.betSize = 0;
@@ -278,6 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 8. checkLastBetResult
   function checkLastBetResult(latestNumber) {
     if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
+    // Här använder vi doubleStreetGroups för bet-suggestion om bet type är "line"
     const groupArray = currentBet.betType === "line" ? doubleStreetGroups : columnGroups;
     const targetGroup = groupArray.find(g => g.name === currentBet.betTarget);
     if (!targetGroup) return;
