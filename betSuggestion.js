@@ -2,7 +2,7 @@
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
 import { getMaxGapGroup } from "./gapCounters.js";
 
-// Exportera progression-variabler (kan även hanteras enbart i denna modul)
+// Exportera progression-variabler
 export let consecutiveLosses = 0;
 export let currentBet = {
   betType: null, // "line" eller "column"
@@ -11,7 +11,7 @@ export let currentBet = {
 };
 
 export function initBetSuggestion() {
-  // Initiera eventuellt UI för bet-suggestion, om nödvändigt.
+  // Om du vill initiera UI för bet-suggestion, gör det här.
 }
 
 export function updateBetSuggestion(params) {
