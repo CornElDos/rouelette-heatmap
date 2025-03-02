@@ -1,6 +1,4 @@
 /* heatmap.js */
-// Om du vill dela upp ytterligare kan du ha en separat fil, men här har vi allt i en fil
-
 export function displayHeatmap(layoutType, selectedNumbers, tableType, redNumbers) {
   const frequencies = getNumberFrequencies(selectedNumbers, tableType);
   if (layoutType === "standard") {
