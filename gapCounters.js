@@ -26,8 +26,6 @@ export function updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, 
   targetElement.innerHTML = html;
 }
 
-import { getGroupGap, getMaxGapGroup } from "./gapCounters.js";
-
 export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, targetElement) {
   let html = "<h3>Single Street Gaps</h3>";
   
