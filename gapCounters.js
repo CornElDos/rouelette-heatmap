@@ -20,6 +20,15 @@ export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, 
   targetElement.innerHTML = html;
 }
 
+export function updateColumnCounters(columnGroups, selectedNumbers, targetElement) {
+  let html = "<h3>Column Gaps</h3>";
+  columnGroups.forEach(group => {
+    const gap = getGroupGap(columnGroups, group.name, selectedNumbers);
+    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+  });
+  targetElement.innerHTML = html;
+}
+
 // Uppdaterar Dozen Gaps
 export function updateDozenCounters(dozenGroups, selectedNumbers, targetElement) {
   let html = "<h3>Dozen Gaps</h3>";
