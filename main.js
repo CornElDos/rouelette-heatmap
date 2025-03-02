@@ -1,7 +1,7 @@
 /* main.js - Ingångspunkt för applikationen */
 
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
-import { displayHeatmap } from "./heatmap.js";
+import { displayHeatmap } from "./heatmap.js";//
 import { updateLineCounters, updateColumnCounters, updateDoubleStreetCounters, updateSingleStreetCounters, updateDozenCounters } from "./gapCounters.js";
 import { updateBetSuggestion, initBetSuggestion, currentBet } from "./betSuggestion.js";
 
