@@ -28,22 +28,13 @@ export function updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, 
 
 export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, targetElement) {
   let html = "<h3>Single Street Gaps</h3>";
-  
-  // 1) Hitta vilken single street har högst gap
-  maxGroup = getMaxGapGroup(singleStreetGroups, selectedNumbers);
-
   singleStreetGroups.forEach(group => {
     const gap = getGroupGap(singleStreetGroups, group.name, selectedNumbers);
-    // 2) Om group.name == maxGroup.name => ljusgrön bakgrund
-    if (group.name === maxGroup.name) {
-      html += `<p style="background-color: #ccffcc;">${group.name}: ${gap} spin(s) since win</p>`;
-    } else {
-      html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
-    }
+    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
   });
-
   targetElement.innerHTML = html;
 }
+
 
 export function updateDozenCounters(dozenGroups, selectedNumbers, targetElement) {
   let html = "<h3>Dozen Gaps</h3>";
