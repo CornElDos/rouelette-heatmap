@@ -61,7 +61,7 @@ const bettingStatusMsg = document.getElementById("bettingStatusMsg");
 
 // När DOM laddats
 document.addEventListener("DOMContentLoaded", () => {
-  // confirmType
+  // 1. Bekräfta bordstyp
   document.getElementById("confirmType").addEventListener("click", () => {
     const radios = document.getElementsByName("tableType");
     for (let radio of radios) {
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bankrollSectionDiv.classList.remove("d-none");
   });
 
-  // stakeStyle
+  // 2. Hantera stake style
   const stakeStyleRadios = document.getElementsByName("stakeStyle");
   stakeStyleRadios.forEach(radio => {
     radio.addEventListener("change", () => {
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // confirmBankroll
+  // 3. Bekräfta Bankroll & Settings
   document.getElementById("confirmBankroll").addEventListener("click", () => {
     bankroll = parseInt(document.getElementById("bankrollInput").value) || 1000;
     stakeStyle = [...stakeStyleRadios].find(r => r.checked).value;
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
     updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
 
-    // Visa bet suggestion
+    // Visa Bet Suggestion
     document.getElementById("betSuggestionArea").classList.remove("d-none");
     initBetSuggestion();
     updateBetSuggestion({
@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     displayBankroll();
   });
 
-  // setupNumberGrid
+  // 4. Setup Number Grid
   function setupNumberGrid() {
     numberGridDiv.innerHTML = "";
     let numbers = [];
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
           heatmapOptionsDiv.classList.remove("d-none");
         }
         if (currentHeatmapLayout !== null) {
-          const heatmapEl = displayHeatmap(currentHeatmapLayout, selectedNumbers, tableType);
+          const heatmapEl = displayHeatmap(currentHeatmapLayout, selectedNumbers, tableType, redNumbers);
           heatmapDisplayDiv.innerHTML = "";
           heatmapDisplayDiv.classList.remove("d-none");
           heatmapDisplayDiv.appendChild(heatmapEl);
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // resetNumbers
+  // 5. Reset-knapp
   resetButton.addEventListener("click", () => {
     selectedNumbers = [];
     selectedNumbersDisplay.textContent = "";
@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastBetResultDisplay.textContent = "N/A";
   });
 
-  // Toggle Betting
+  // 6. Toggle Betting
   toggleBettingBtn.addEventListener("click", () => {
     bettingActive = !bettingActive;
     if (bettingActive) {
@@ -223,10 +223,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Heatmap-knappar
+  // 7. Heatmap-knappar
   document.getElementById("showStandardHeatmap").addEventListener("click", () => {
     currentHeatmapLayout = "standard";
-    const heatmapEl = displayHeatmap("standard", selectedNumbers, tableType);
+    const heatmapEl = displayHeatmap("standard", selectedNumbers, tableType, redNumbers);
     heatmapDisplayDiv.innerHTML = "";
     heatmapDisplayDiv.classList.remove("d-none");
     heatmapDisplayDiv.appendChild(heatmapEl);
@@ -234,12 +234,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("showRacetrackHeatmap").addEventListener("click", () => {
     currentHeatmapLayout = "racetrack";
-    const heatmapEl = displayHeatmap("racetrack", selectedNumbers, tableType);
+    const heatmapEl = displayHeatmap("racetrack", selectedNumbers, tableType, redNumbers);
     heatmapDisplayDiv.innerHTML = "";
     heatmapDisplayDiv.classList.remove("d-none");
     heatmapDisplayDiv.appendChild(heatmapEl);
   });
 
+  // 8. checkLastBetResult
   function checkLastBetResult(latestNumber) {
     if (!currentBet.betTarget || !currentBet.betType || currentBet.betSize === 0) return;
     const groupArray = currentBet.betType === "line" ? lineGroups : columnGroups;
