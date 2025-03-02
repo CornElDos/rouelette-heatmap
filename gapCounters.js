@@ -26,12 +26,24 @@ export function updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, 
   targetElement.innerHTML = html;
 }
 
+import { getGroupGap, getMaxGapGroup } from "./gapCounters.js";
+
 export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, targetElement) {
   let html = "<h3>Single Street Gaps</h3>";
+  
+  // 1) Hitta vilken single street har högst gap
+  const maxGroup = getMaxGapGroup(singleStreetGroups, selectedNumbers);
+
   singleStreetGroups.forEach(group => {
     const gap = getGroupGap(singleStreetGroups, group.name, selectedNumbers);
-    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+    // 2) Om group.name == maxGroup.name => ljusgrön bakgrund
+    if (group.name === maxGroup.name) {
+      html += `<p style="background-color: #ccffcc;">${group.name}: ${gap} spin(s) since win</p>`;
+    } else {
+      html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+    }
   });
+
   targetElement.innerHTML = html;
 }
 
