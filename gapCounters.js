@@ -30,7 +30,7 @@ export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, 
   let html = "<h3>Single Street Gaps</h3>";
   
   // 1) Hitta vilken single street har högst gap
-  const maxGroup = getMaxGapGroup(singleStreetGroups, selectedNumbers);
+  maxGroup = getMaxGapGroup(singleStreetGroups, selectedNumbers);
 
   singleStreetGroups.forEach(group => {
     const gap = getGroupGap(singleStreetGroups, group.name, selectedNumbers);
