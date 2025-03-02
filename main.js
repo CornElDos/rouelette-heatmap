@@ -3,7 +3,7 @@
 import { roundBetSize, getNextBetMartingale, getNextBetFibonacci, getNextBetPadovan } from "./helpers.js";
 import { displayHeatmap } from "./heatmap.js";
 import { updateLineCounters, updateColumnCounters } from "./gapCounters.js";
-import { updateBetSuggestion, initBetSuggestion, consecutiveLosses, currentBet } from "./betSuggestion.js";
+import { updateBetSuggestion, initBetSuggestion, currentBet } from "./betSuggestion.js";
 
 // Globala variabler
 let tableType = "european";
@@ -19,6 +19,9 @@ let basePercent = 10;
 let roundingFactor = 5;
 let betProgression = "martingale";
 let bettingActive = false; // togglas via "Start Betting" / "Stop Betting"
+
+// Hantera antalet förlustspel lokalt
+let losses = 0;
 
 // Line & Column groups
 const lineGroups = [
@@ -61,7 +64,7 @@ const bettingStatusMsg = document.getElementById("bettingStatusMsg");
 
 // När DOM laddats
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Bekräfta bordstyp
+  // 1. Välj bordstyp
   document.getElementById("confirmType").addEventListener("click", () => {
     const radios = document.getElementsByName("tableType");
     for (let radio of radios) {
@@ -111,12 +114,12 @@ document.addEventListener("DOMContentLoaded", () => {
     updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
     updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
 
-    // Visa Bet Suggestion
+    // Visa Bet Suggestion-panel
     document.getElementById("betSuggestionArea").classList.remove("d-none");
     initBetSuggestion();
     updateBetSuggestion({
       selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
-      betProgression, tableType, lineGroups, columnGroups, bettingActive,
+      betProgression, tableType, lineGroups, columnGroups, bettingActive, losses,
       elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
     });
     displayBankroll();
@@ -164,12 +167,12 @@ document.addEventListener("DOMContentLoaded", () => {
         updateLineCounters(lineGroups, selectedNumbers, document.getElementById("lineCounterDisplay"));
         updateColumnCounters(columnGroups, selectedNumbers, document.getElementById("columnCounterDisplay"));
 
-        // Endast om betting är på
+        // Endast om betting är aktivt
         if (bettingActive) {
           checkLastBetResult(num);
           updateBetSuggestion({
             selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
-            betProgression, tableType, lineGroups, columnGroups, bettingActive,
+            betProgression, tableType, lineGroups, columnGroups, bettingActive, losses,
             elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
           });
         }
@@ -196,11 +199,11 @@ document.addEventListener("DOMContentLoaded", () => {
     currentBet.betType = null;
     currentBet.betTarget = null;
     currentBet.betSize = 0;
-    consecutiveLosses = 0;
+    losses = 0;
     displayBankroll();
     updateBetSuggestion({
       selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
-      betProgression, tableType, lineGroups, columnGroups, bettingActive,
+      betProgression, tableType, lineGroups, columnGroups, bettingActive, losses,
       elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
     });
     lastBetResultDisplay.textContent = "N/A";
@@ -218,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateBetSuggestion({
       selectedNumbers, bankroll, stakeStyle, baseBet, basePercent, roundingFactor,
-      betProgression, tableType, lineGroups, columnGroups, bettingActive,
+      betProgression, tableType, lineGroups, columnGroups, bettingActive, losses,
       elements: { suggestedBetDisplay, betSizeDisplay, progressionStepDisplay, winProbabilityDisplay }
     });
   });
@@ -251,11 +254,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const multiplier = (currentBet.betType === "line") ? 5 : 2;
       const winAmount = currentBet.betSize * multiplier;
       bankroll += winAmount;
-      consecutiveLosses = 0;
+      losses = 0;
     } else {
       lastBetResultDisplay.textContent = "LOSS";
       bankroll -= currentBet.betSize;
-      consecutiveLosses++;
+      losses++;
     }
     displayBankroll();
   }
