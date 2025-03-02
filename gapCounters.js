@@ -1,20 +1,8 @@
 /* gapCounters.js */
-
-// Uppdaterar Double Street Gaps (tidigare "Line Gaps")
-export function updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, targetElement) {
-  let html = "<h3>Double Street Gaps</h3>";
-  doubleStreetGroups.forEach(group => {
-    const gap = getGroupGap(doubleStreetGroups, group.name, selectedNumbers);
-    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
-  });
-  targetElement.innerHTML = html;
-}
-
-// Uppdaterar Single Street Gaps
-export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, targetElement) {
-  let html = "<h3>Single Street Gaps</h3>";
-  singleStreetGroups.forEach(group => {
-    const gap = getGroupGap(singleStreetGroups, group.name, selectedNumbers);
+export function updateLineCounters(lineGroups, selectedNumbers, targetElement) {
+  let html = "<h3>Line Gaps</h3>";
+  lineGroups.forEach(group => {
+    const gap = getGroupGap(lineGroups, group.name, selectedNumbers);
     html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
   });
   targetElement.innerHTML = html;
@@ -29,7 +17,24 @@ export function updateColumnCounters(columnGroups, selectedNumbers, targetElemen
   targetElement.innerHTML = html;
 }
 
-// Uppdaterar Dozen Gaps
+export function updateDoubleStreetCounters(doubleStreetGroups, selectedNumbers, targetElement) {
+  let html = "<h3>Double Street Gaps</h3>";
+  doubleStreetGroups.forEach(group => {
+    const gap = getGroupGap(doubleStreetGroups, group.name, selectedNumbers);
+    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+  });
+  targetElement.innerHTML = html;
+}
+
+export function updateSingleStreetCounters(singleStreetGroups, selectedNumbers, targetElement) {
+  let html = "<h3>Single Street Gaps</h3>";
+  singleStreetGroups.forEach(group => {
+    const gap = getGroupGap(singleStreetGroups, group.name, selectedNumbers);
+    html += `<p>${group.name}: ${gap} spin(s) since win</p>`;
+  });
+  targetElement.innerHTML = html;
+}
+
 export function updateDozenCounters(dozenGroups, selectedNumbers, targetElement) {
   let html = "<h3>Dozen Gaps</h3>";
   dozenGroups.forEach(group => {
